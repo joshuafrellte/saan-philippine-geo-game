@@ -832,7 +832,7 @@ function boot(data) {
     const head = document.createElement("div");
     head.className = "settings-head";
     const title = document.createElement("h2");
-    title.textContent = "Quiz settings";
+    title.textContent = "Settings";
     const close = document.createElement("button");
     close.type = "button";
     close.className = "settings-close";
@@ -840,22 +840,25 @@ function boot(data) {
     close.addEventListener("click", () => dialog.close());
     head.append(title, close);
 
+    const outlines = document.createElement("section");
     const outlineTitle = document.createElement("h3");
     outlineTitle.textContent = "Outlines";
     const outlineNote = document.createElement("p");
     outlineNote.className = "hint";
     outlineNote.textContent = "Turn province borders off to learn each region as one shape. Turn them back on whenever you want the lines inside.";
-
-    dialog.append(
-      head,
+    outlines.append(
       outlineTitle,
       outlineNote,
       outlineToggle("Province borders", "provinces"),
-      outlineToggle("City borders", "cities"),
-      locateToggle(),
-      citySection(),
-      dataSection()
+      outlineToggle("City borders", "cities")
     );
+
+    const typeIt = document.createElement("section");
+    const typeTitle = document.createElement("h3");
+    typeTitle.textContent = "Type it";
+    typeIt.append(typeTitle, locateToggle());
+
+    dialog.append(head, outlines, typeIt, citySection(), dataSection());
     if (!dialog.open) dialog.showModal();
   }
 
@@ -958,7 +961,10 @@ function boot(data) {
   function citySection() {
     const wrap = document.createElement("div");
     const title = document.createElement("h3");
-    title.textContent = "Cities in this quiz";
+    const active = view().cities.length;
+    title.textContent = active === data.cities.length
+      ? `${active} cities`
+      : `${active} of ${data.cities.length} cities`;
     const actions = document.createElement("div");
     actions.className = "settings-actions";
     for (const [label, ids] of [

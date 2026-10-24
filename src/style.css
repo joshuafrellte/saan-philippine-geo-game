@@ -541,7 +541,11 @@ h1 span { color: var(--gold); }
   min-height: 44px;
 }
 
-.check-row input { width: 20px; height: 20px; }
+.check-row input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--gold);
+}
 
 .region-cities { padding-left: 28px; }
 
