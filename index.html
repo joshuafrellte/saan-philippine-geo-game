@@ -22,8 +22,9 @@
           <h1>Saan<span>?</span></h1>
         </div>
         <div class="top-side">
-          <button type="button" id="study-open" class="study-open" aria-pressed="false">Study</button>
           <div class="score" id="score" aria-label="Score"></div>
+          <span id="city-count" class="city-count" hidden></span>
+          <button type="button" id="settings-open" class="gear" aria-label="Settings"></button>
         </div>
       </header>
       <nav class="modes" id="modes" aria-label="Quiz modes"></nav>
@@ -45,9 +46,9 @@
           <p id="hint" class="hint"></p>
         </section>
         <section class="dock" id="dock"></section>
+        <section id="study-host" class="study-host" hidden></section>
       </div>
       </div>
-      <aside id="study-panel" class="study-panel" aria-label="Place" inert></aside>
     </div>
     <script type="module" src="/src/main.js"></script>
   </body>

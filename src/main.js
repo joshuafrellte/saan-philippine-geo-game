@@ -57,9 +57,9 @@ function boot(data) {
   const svg = document.querySelector("#map");
 
   const hoverLabel = document.querySelector("#hover-label");
-  const studyButton = document.querySelector("#study-open");
-  const panel = document.querySelector("#study-panel");
-  const shell = document.querySelector("#shell");
+  const studyHost = document.querySelector("#study-host");
+  const cityCount = document.querySelector("#city-count");
+  const settingsButton = document.querySelector("#settings-open");
   const levels = document.createElement("div");
   levels.className = "study-levels";
   levels.setAttribute("role", "group");
@@ -75,7 +75,6 @@ function boot(data) {
     });
     levels.append(button);
   }
-  prompt.parentElement.append(levels);
 
   const map = mountMap(svg, data, (properties) => {
     if (state.studying) {
@@ -141,36 +140,48 @@ function boot(data) {
     group.className = "mode-group";
     group.setAttribute("role", "group");
     group.setAttribute("aria-label", label);
-    const title = document.createElement("span");
-    title.className = "mode-group-label";
-    title.textContent = label;
-    group.append(title);
     for (const mode of list) group.append(modeButton(mode));
     return group;
   }
 
-  modes.append(
-    modeGroup("Play", MODES.filter((mode) => mode.id === "daily")),
-    modeGroup("Quiz", MODES.filter((mode) => mode.id !== "daily"))
-  );
+  function divider() {
+    const rule = document.createElement("span");
+    rule.className = "mode-divider";
+    rule.setAttribute("aria-hidden", "true");
+    return rule;
+  }
 
-  const settingsButton = document.createElement("button");
-  settingsButton.type = "button";
-  settingsButton.className = "settings-open";
-  const settingsName = document.createElement("span");
-  settingsName.className = "settings-name";
-  const cityCount = document.createElement("span");
-  cityCount.className = "settings-count";
-  const settingsCopy = document.createElement("span");
-  settingsCopy.className = "settings-copy";
-  settingsCopy.append(settingsName, cityCount);
-  settingsButton.append(filterIcon(), settingsCopy);
+  const playGroup = modeGroup("Play", MODES.filter((mode) => mode.id === "daily"));
+  const quizGroup = modeGroup("Quiz", MODES.filter((mode) => mode.id !== "daily"));
+  const learnGroup = document.createElement("div");
+  learnGroup.className = "mode-group";
+  learnGroup.setAttribute("role", "group");
+  learnGroup.setAttribute("aria-label", "Learn");
+  const studyButton = document.createElement("button");
+  studyButton.type = "button";
+  studyButton.id = "study-open";
+  studyButton.className = "mode";
+  studyButton.textContent = "Study";
+  studyButton.setAttribute("aria-pressed", "false");
+  learnGroup.append(studyButton, levels);
+  const dividers = [divider(), divider()];
+  modes.append(playGroup, dividers[0], quizGroup, dividers[1], learnGroup);
+
+  settingsButton.append(gearIcon());
   settingsButton.addEventListener("click", openSettings);
-  modes.append(settingsButton);
 
   function setCityCount() {
-    settingsName.textContent = "Map settings";
+    const show = !state.studying && state.mode === "city";
+    cityCount.hidden = !show;
     cityCount.textContent = cityCountLabel();
+  }
+
+  function setModeRow(studying) {
+    playGroup.hidden = studying;
+    quizGroup.hidden = studying;
+    dividers[0].hidden = studying;
+    dividers[1].hidden = studying;
+    levels.hidden = !studying;
   }
 
   const dialog = document.createElement("dialog");
@@ -190,7 +201,7 @@ function boot(data) {
 
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape" || !state.studying || dialog.open) return;
-    if (!app.classList.contains("is-reading")) return;
+    if (!state.studyPlace) return;
     event.preventDefault();
     closePanel();
   });
@@ -477,21 +488,30 @@ function boot(data) {
 
   function paintStudy() {
     app.classList.add("is-studying");
+    setModeRow(true);
     studyButton.classList.add("is-active");
     studyButton.setAttribute("aria-pressed", "true");
     studyButton.textContent = "Quiz";
+    prompt.parentElement.hidden = true;
+    dock.hidden = true;
+    studyHost.hidden = false;
     setCityCount();
-    for (const button of modes.querySelectorAll(".mode")) {
-      button.classList.remove("is-active");
-      button.setAttribute("aria-pressed", "false");
-    }
+    paintScore();
     for (const button of levels.querySelectorAll("button")) {
       const active = button.dataset.level === state.studyLevel;
       button.classList.toggle("is-active", active);
       button.setAttribute("aria-pressed", active ? "true" : "false");
     }
     const levelName = state.studyLevel === "region" ? "region" : state.studyLevel === "city" ? "city" : "province";
-    renderPrompt(prompt, `Hover a ${levelName}, then open it.`, levelName);
+    const open = state.studyPlace?.kind === state.studyLevel ? state.studyPlace : null;
+    if (open) renderPanel(open);
+    else {
+      studyHost.replaceChildren();
+      const note = document.createElement("p");
+      note.className = "study-empty";
+      renderPrompt(note, `Hover a ${levelName}, then open it.`, levelName);
+      studyHost.append(note);
+    }
     map.show(null, {
       study: {
         level: state.studyLevel,
@@ -505,73 +525,34 @@ function boot(data) {
   function leaveStudy() {
     state.studying = false;
     state.studyPlace = null;
-    closePanel(true);
     hoverLabel.hidden = true;
     app.classList.remove("is-studying");
+    setModeRow(false);
     studyButton.classList.remove("is-active");
     studyButton.setAttribute("aria-pressed", "false");
     studyButton.textContent = "Study";
+    studyHost.hidden = true;
+    studyHost.replaceChildren();
+    prompt.parentElement.hidden = false;
+    dock.hidden = false;
   }
-
-  let slideToken = 0;
 
   function openPlace(place) {
     state.studyPlace = place;
     state.studyLevel = place.kind;
-    renderPanel(place);
     paintStudy();
     hoverLabel.hidden = true;
-    if (app.classList.contains("is-panel")) return;
-    const token = ++slideToken;
-    app.classList.add("is-reading");
-    const finish = () => {
-      if (token !== slideToken) return;
-      slideToken += 1;
-      app.classList.add("is-panel");
-      panel.inert = false;
-      panel.querySelector(".study-close")?.focus();
-    };
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      finish();
-      return;
-    }
-    const onEnd = (event) => {
-      if (event.target !== shell) return;
-      if (event.propertyName !== "margin-left" && event.propertyName !== "transform") return;
-      shell.removeEventListener("transitionend", onEnd);
-      finish();
-    };
-    shell.addEventListener("transitionend", onEnd);
-    window.setTimeout(finish, 700);
+    studyHost.querySelector(".study-close")?.focus();
   }
 
-  function closePanel(immediate = false) {
-    const token = ++slideToken;
+  function closePanel() {
     state.studyPlace = null;
-    panel.inert = true;
-    const finish = () => {
-      if (token !== slideToken) return;
-      app.classList.remove("is-reading");
-    };
-    if (immediate || !app.classList.contains("is-panel")) {
-      app.classList.remove("is-panel", "is-reading");
-      if (state.studying) paintStudy();
-      return;
-    }
-    app.classList.remove("is-panel");
-    const onEnd = (event) => {
-      if (event.target !== panel || event.propertyName !== "transform") return;
-      panel.removeEventListener("transitionend", onEnd);
-      finish();
-    };
-    panel.addEventListener("transitionend", onEnd);
-    window.setTimeout(finish, 700);
     if (state.studying) paintStudy();
   }
 
   function renderPanel(place) {
     const card = studyCard(data, studyLibrary, place);
-    panel.replaceChildren();
+    studyHost.replaceChildren();
     const head = document.createElement("div");
     head.className = "study-head";
     const titles = document.createElement("div");
@@ -620,8 +601,8 @@ function boot(data) {
       item.textContent = fact;
       list.append(item);
     }
-    panel.append(head, meta, list);
-    panel.setAttribute("aria-label", card.name);
+    studyHost.append(head, meta, list);
+    studyHost.setAttribute("aria-label", card.name);
   }
 
   function paint() {
@@ -631,50 +612,20 @@ function boot(data) {
       return;
     }
     const { question } = state;
+    setModeRow(false);
+    prompt.parentElement.hidden = false;
+    dock.hidden = false;
+    studyHost.hidden = true;
     renderPrompt(prompt, question.prompt, question.promptMark);
     hint.textContent = hintFor(question, state);
     setCityCount();
+    paintScore();
 
     for (const button of modes.querySelectorAll(".mode")) {
       const active = button.dataset.mode === state.mode;
       button.classList.toggle("is-active", active);
       button.setAttribute("aria-pressed", active ? "true" : "false");
       if (active) button.scrollIntoView({ inline: "nearest", block: "nearest" });
-    }
-
-    score.replaceChildren();
-    if (state.mode === "daily" && state.daily) {
-      const strong = document.createElement("strong");
-      strong.textContent = String(state.daily.streak);
-      const label = document.createElement("span");
-      label.textContent = "daily streak";
-      score.append(strong, label);
-    } else {
-    const ratio = document.createElement("strong");
-    ratio.textContent = `${state.session.correct}/${state.session.answered}`;
-    const streak = document.createElement("span");
-    streak.textContent = `${state.session.streak} in a row`;
-    score.append(ratio, streak);
-    const saved = Object.keys(state.misses).length;
-    if (saved > 0) {
-      const review = document.createElement("span");
-      review.textContent = `${saved} ${saved === 1 ? "place" : "places"} to review`;
-      const clear = document.createElement("button");
-      clear.type = "button";
-      clear.className = "text-button";
-      clear.textContent = "Reset review list";
-      clear.addEventListener("click", () => {
-        const placeWord = saved === 1 ? "place" : "places";
-        const ok = window.confirm(
-          `Reset the review list? This forgets ${saved} ${placeWord} you missed. The score stays.`
-        );
-        if (!ok) return;
-        state.misses = {};
-        saveMisses(state.misses);
-        paint();
-      });
-      score.append(review, clear);
-    }
     }
 
     dock.replaceChildren();
@@ -864,9 +815,76 @@ function boot(data) {
       outlineToggle("Province borders", "provinces"),
       outlineToggle("City borders", "cities"),
       locateToggle(),
-      citySection()
+      citySection(),
+      dataSection()
     );
     if (!dialog.open) dialog.showModal();
+  }
+
+  function paintScore() {
+    score.replaceChildren();
+    const main = document.createElement("div");
+    main.className = "score-main";
+    const ratio = document.createElement("strong");
+    ratio.textContent = `${state.session.correct}/${state.session.answered}`;
+    const caption = document.createElement("span");
+    caption.className = "score-caption";
+    caption.textContent = "this session";
+    main.append(ratio, caption);
+
+    const quiet = document.createElement("div");
+    quiet.className = "score-quiet";
+    const streak = document.createElement("span");
+    streak.className = "stat";
+    streak.title = "Correct answers in a row";
+    const streakNum = document.createElement("b");
+    streakNum.textContent = String(state.session.streak);
+    const streakNote = document.createElement("span");
+    streakNote.className = "stat-note";
+    streakNote.textContent = "correct";
+    streak.append(streakNum, document.createTextNode(" in a row "), streakNote);
+    quiet.append(streak);
+
+    if (state.daily) {
+      const day = document.createElement("span");
+      day.className = "stat stat-daily";
+      const dayNum = document.createElement("b");
+      dayNum.textContent = String(state.daily.streak);
+      day.append(dayNum, document.createTextNode(" daily streak"));
+      quiet.append(day);
+    }
+
+    const saved = Object.keys(state.misses).length;
+    const review = document.createElement("span");
+    review.className = saved ? "stat" : "stat is-empty";
+    review.textContent = saved === 0
+      ? "0 to review"
+      : `${saved} ${saved === 1 ? "place" : "places"} to review`;
+    quiet.append(review);
+    score.append(main, quiet);
+  }
+
+  function dataSection() {
+    const wrap = document.createElement("div");
+    const title = document.createElement("h3");
+    title.textContent = "Data";
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "text-button";
+    button.textContent = "Reset review list";
+    button.addEventListener("click", () => {
+      const saved = Object.keys(state.misses).length;
+      const placeWord = saved === 1 ? "place" : "places";
+      const message = saved
+        ? `Reset the review list? This forgets ${saved} ${placeWord} you missed. The score stays.`
+        : "Reset the review list? There is nothing to forget. The score stays.";
+      if (!window.confirm(message)) return;
+      state.misses = {};
+      saveMisses(state.misses);
+      paint();
+    });
+    wrap.append(title, button);
+    return wrap;
   }
 
   function locateToggle() {
@@ -1122,15 +1140,15 @@ function copyIcon() {
   return svg;
 }
 
-function filterIcon() {
+function gearIcon() {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("viewBox", "0 0 16 16");
+  svg.setAttribute("viewBox", "0 0 24 24");
   svg.setAttribute("aria-hidden", "true");
   const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
   path.setAttribute("fill", "currentColor");
   path.setAttribute(
     "d",
-    "M1.25 2.4h13.5a.7.7 0 0 1 .54 1.15L10 8.7v4.15a.7.7 0 0 1-1.02.62l-2.3-1.15a.7.7 0 0 1-.38-.62V8.7L.71 3.55a.7.7 0 0 1 .54-1.15Z"
+    "M19.14 12.94a7.4 7.4 0 0 0 .05-.94 7.4 7.4 0 0 0-.05-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.2 7.2 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.5.42l-.36 2.54a7.2 7.2 0 0 0-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 8.84a.5.5 0 0 0 .12.64l2.03 1.58a7.4 7.4 0 0 0-.05.94c0 .32.02.63.05.94L2.83 14.52a.5.5 0 0 0-.12.64l1.92 3.32c.13.23.4.32.64.22l2.39-.96c.5.39 1.05.71 1.63.94l.36 2.54c.05.24.26.42.5.42h3.84c.24 0 .45-.18.5-.42l.36-2.54c.58-.23 1.13-.55 1.63-.94l2.39.96c.24.1.51 0 .64-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z"
   );
   svg.append(path);
   return svg;
