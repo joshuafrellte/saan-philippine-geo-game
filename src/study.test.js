@@ -29,6 +29,14 @@ describe("study library", () => {
     const nir = atlas.regions.find((region) => region.id === "nir");
     const card = studyCard(atlas, study, nir);
     expect(card.rows[0].text).toMatch(/settled/i);
+    expect(card.eyebrow).toBe("Region XVIII");
+  });
+
+  it("puts the region number above the region name", () => {
+    const cagayan = atlas.regions.find((region) => region.id === "region-2");
+    const mimaropa = atlas.regions.find((region) => region.id === "mimaropa");
+    expect(studyCard(atlas, study, cagayan).eyebrow).toBe("Region II");
+    expect(studyCard(atlas, study, mimaropa).eyebrow).toBe("Region IV-B");
   });
 
   it("does not repeat the capital, seat, or city status already shown on the card", () => {

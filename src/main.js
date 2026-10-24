@@ -1,10 +1,10 @@
 import { buildAtlas, validateAtlas } from "./atlas.js";
 import { loadMisses, saveMisses } from "./memory.js";
-import { MODES, catalogFor, checkAnswer, createQuestion, describePlace, displayName, hintSteps, questionForMisses, regionWeights, settleScore } from "./quiz.js";
+import { CATEGORIES, applyCategoryCheck, catalogFor, categoryLabel, checkAnswer, createQuestion, describePlace, hintSteps, regionWeights, settleScore } from "./quiz.js";
 import { mountMap } from "./map.js";
 import { DAILY_TRIES, applyGuess, boardForToday, countdownPhrase, dailyProvince, formatCountdown, formatEditionDate, loadDaily, manilaDate, msUntilNextDaily, placeBearing, resolveGuess, resultMarks, saveDaily, shareText } from "./daily.js";
 import { suggestPlaces } from "./suggest.js";
-import { loadCitySet, loadLocate, loadOutlines, majorCityIds, resolveCities, saveCitySet, saveLocate, saveOutlines } from "./settings.js";
+import { loadCitySet, loadLocate, loadOutlines, loadScorePrefs, majorCityIds, resolveCities, saveCitySet, saveLocate, saveOutlines, saveScorePrefs } from "./settings.js";
 import { studyCard } from "./study.js";
 import places from "../data/places.json";
 import studyLibrary from "../data/study.json";
@@ -28,19 +28,21 @@ if (errors.length) {
 
 function boot(data) {
   const state = {
-    mode: "region",
+    mode: "locate",
+    play: "locate",
+    categories: ["region"],
     misses: loadMisses(),
     question: null,
     answered: false,
     correct: false,
     wrongId: null,
     pickedName: "",
-    session: { correct: 0, answered: 0, streak: 0, recent: [] },
-    reviewing: false,
+    session: { correct: 0, answered: 0, streak: 0 },
     previousKey: null,
     cityIds: loadCitySet(),
     outlines: loadOutlines(),
     locate: loadLocate(),
+    scorePrefs: loadScorePrefs(),
     hintStep: 0,
     assisted: false,
     daily: null,
@@ -58,9 +60,8 @@ function boot(data) {
   const svg = document.querySelector("#map");
 
   const hoverLabel = document.querySelector("#hover-label");
-  const studyHost = document.querySelector("#study-host");
-  const cityCount = document.querySelector("#city-count");
-  const settingsButton = document.querySelector("#settings-open");
+  const studyButton = document.querySelector("#study-open");
+  const panel = document.querySelector("#study-card");
   const levels = document.createElement("div");
   levels.className = "study-levels";
   levels.setAttribute("role", "group");
@@ -76,6 +77,11 @@ function boot(data) {
     });
     levels.append(button);
   }
+  prompt.parentElement.insertBefore(levels, panel);
+  const studyNote = document.createElement("p");
+  studyNote.className = "study-note";
+  studyNote.hidden = true;
+  prompt.parentElement.insertBefore(studyNote, panel);
 
   const map = mountMap(svg, data, (properties) => {
     if (state.studying) {
@@ -83,7 +89,7 @@ function boot(data) {
       if (place) openPlace(place);
       return;
     }
-    if (state.mode === "daily" || state.mode === "type") return;
+    if (state.mode !== "locate") return;
     if (state.answered || !state.question?.place) return;
     const response = properties.id;
     settle(response, response === state.question.targetId ? null : response, properties.name);
@@ -114,76 +120,209 @@ function boot(data) {
     return `${active} of ${data.cities.length}`;
   }
 
-  function modeButton(mode) {
+  const PLAYS = [
+    { id: "locate", label: "Locate", detail: "Click the place on the map." },
+    { id: "mcq", label: "Multiple choice", detail: "Pick the name from four choices." },
+    { id: "type", label: "Type it", detail: "Type the name." },
+  ];
+
+  let openMenu = null;
+
+  function closeMenus() {
+    for (const panel of document.querySelectorAll(".menu-panel")) panel.hidden = true;
+    for (const button of document.querySelectorAll(".menu-button")) button.setAttribute("aria-expanded", "false");
+    openMenu = null;
+  }
+
+  function placeMenu(button, panel) {
+    panel.hidden = false;
+    const rect = button.getBoundingClientRect();
+    const width = panel.offsetWidth;
+    const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
+    panel.style.top = `${Math.round(rect.bottom + 6)}px`;
+    panel.style.left = `${Math.round(left)}px`;
+  }
+
+  function toggleMenu(wrap, button, panel) {
+    const willOpen = panel.hidden;
+    closeMenus();
+    if (!willOpen) return;
+    placeMenu(button, panel);
+    button.setAttribute("aria-expanded", "true");
+    openMenu = wrap;
+  }
+
+  function startQuiz(mode, keepMenu = false) {
+    if (!keepMenu) closeMenus();
+    if (state.studying) leaveStudy();
+    state.mode = mode;
+    map.resetZoom();
+    ask();
+  }
+
+  const dailyButton = document.createElement("button");
+  dailyButton.type = "button";
+  dailyButton.className = "mode";
+  dailyButton.dataset.mode = "daily";
+  dailyButton.textContent = "Daily";
+  dailyButton.addEventListener("click", () => {
+    closeMenus();
+    if (state.studying) leaveStudy();
+    if (state.mode === "daily" && !state.answered) return;
+    state.mode = "daily";
+    map.resetZoom();
+    ask();
+  });
+
+  function menuControl(group) {
+    const wrap = document.createElement("div");
+    wrap.className = "menu";
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "mode";
-    button.dataset.mode = mode.id;
-    button.textContent = mode.label;
-    button.addEventListener("click", () => {
-      state.reviewing = false;
-      if (state.studying) {
-        leaveStudy();
-        state.mode = mode.id;
-        map.resetZoom();
-        ask();
+    button.className = "mode menu-button";
+    const label = document.createElement("span");
+    label.className = "menu-label";
+    const caret = document.createElement("span");
+    caret.className = "menu-caret";
+    caret.setAttribute("aria-hidden", "true");
+    button.append(label, caret);
+    button.setAttribute("aria-haspopup", "true");
+    button.setAttribute("aria-expanded", "false");
+    const panel = document.createElement("div");
+    panel.className = "menu-panel";
+    panel.hidden = true;
+    panel.setAttribute("role", group === "Category" ? "group" : "menu");
+    panel.setAttribute("aria-label", group);
+    button.addEventListener("click", () => toggleMenu(wrap, button, panel));
+    wrap.append(button, panel);
+    return { wrap, button, label, panel };
+  }
+
+  const scoreMenu = document.createElement("div");
+  scoreMenu.className = "menu";
+  const scoreButton = document.createElement("button");
+  scoreButton.type = "button";
+  scoreButton.className = "study-open score-settings menu-button";
+  scoreButton.setAttribute("aria-label", "Score settings");
+  scoreButton.setAttribute("aria-haspopup", "true");
+  scoreButton.setAttribute("aria-expanded", "false");
+  scoreButton.append(gearIcon());
+  const scorePanel = document.createElement("div");
+  scorePanel.className = "menu-panel";
+  scorePanel.hidden = true;
+  scorePanel.setAttribute("role", "group");
+  scorePanel.setAttribute("aria-label", "Score settings");
+  for (const item of [
+    { key: "streak", label: "Streak counter" },
+    { key: "review", label: "Review counter" },
+    { key: "reset", label: "Reset review list" },
+  ]) {
+    const { row, input } = checkRow(item.label);
+    input.checked = state.scorePrefs[item.key] !== false;
+    input.addEventListener("change", () => {
+      state.scorePrefs = { ...state.scorePrefs, [item.key]: input.checked };
+      saveScorePrefs(state.scorePrefs);
+      paint();
+    });
+    scorePanel.append(row);
+  }
+  scoreButton.addEventListener("click", () => toggleMenu(scoreMenu, scoreButton, scorePanel));
+  scoreMenu.append(scoreButton, scorePanel);
+  studyButton.after(scoreMenu);
+
+  const categoryMenu = menuControl("Category");
+  for (const row of [{ id: "all", label: "All" }, ...CATEGORIES]) {
+    const { row: line, input } = checkRow(row.label);
+    input.dataset.category = row.id;
+    input.addEventListener("change", () => {
+      const next = applyCategoryCheck(state.categories, row.id, input.checked);
+      if (!next) {
+        input.checked = row.id === "all"
+          ? state.categories.length === CATEGORIES.length
+          : state.categories.includes(row.id);
         return;
       }
-      if (state.mode === mode.id && !state.answered) return;
-      state.mode = mode.id;
-      map.resetZoom();
-      ask();
+      const unchanged = next.join() === state.categories.join();
+      state.categories = next;
+      if (unchanged && state.mode !== "daily" && !state.answered && !state.studying) {
+        syncMenus();
+        return;
+      }
+      startQuiz(state.mode === "daily" ? state.play : state.mode, true);
     });
-    return button;
+    categoryMenu.panel.append(line);
   }
 
-  function modeGroup(label, list) {
-    const group = document.createElement("div");
-    group.className = "mode-group";
-    group.setAttribute("role", "group");
-    group.setAttribute("aria-label", label);
-    for (const mode of list) group.append(modeButton(mode));
-    return group;
+  const playMenu = menuControl("Mode");
+  for (const play of PLAYS) {
+    const option = document.createElement("button");
+    option.type = "button";
+    option.className = "menu-option";
+    option.dataset.play = play.id;
+    option.setAttribute("role", "menuitemradio");
+    const name = document.createElement("span");
+    name.textContent = play.label;
+    const detail = document.createElement("span");
+    detail.className = "menu-detail";
+    detail.textContent = play.detail;
+    option.append(name, detail);
+    option.addEventListener("click", () => {
+      state.play = play.id;
+      if (state.mode === play.id && !state.answered && !state.studying) {
+        closeMenus();
+        syncMenus();
+        return;
+      }
+      startQuiz(play.id);
+    });
+    playMenu.panel.append(option);
   }
 
-  function divider() {
-    const rule = document.createElement("span");
-    rule.className = "mode-divider";
-    rule.setAttribute("aria-hidden", "true");
-    return rule;
+  modes.append(dailyButton, categoryMenu.wrap, playMenu.wrap);
+
+  function syncMenus() {
+    const dailyOn = state.mode === "daily";
+    dailyButton.classList.toggle("is-active", dailyOn);
+    dailyButton.setAttribute("aria-pressed", dailyOn ? "true" : "false");
+    const categoryText = categoryLabel(state.categories);
+    categoryMenu.label.textContent = categoryText;
+    categoryMenu.button.setAttribute("aria-label", `Category, ${categoryText}`);
+    const allOn = state.categories.length === CATEGORIES.length;
+    for (const input of categoryMenu.panel.querySelectorAll(".check-input")) {
+      input.checked = input.dataset.category === "all"
+        ? allOn
+        : state.categories.includes(input.dataset.category);
+    }
+    const play = PLAYS.find((item) => item.id === state.play) || PLAYS[0];
+    playMenu.label.textContent = play.label;
+    playMenu.button.setAttribute("aria-label", `Mode, ${play.label}`);
+    for (const option of playMenu.panel.querySelectorAll(".menu-option")) {
+      const current = option.dataset.play === state.play;
+      option.classList.toggle("is-current", current);
+      option.setAttribute("aria-checked", current ? "true" : "false");
+    }
   }
 
-  const playGroup = modeGroup("Play", MODES.filter((mode) => mode.id === "daily"));
-  const quizGroup = modeGroup("Quiz", MODES.filter((mode) => mode.id !== "daily"));
-  const learnGroup = document.createElement("div");
-  learnGroup.className = "mode-group";
-  learnGroup.setAttribute("role", "group");
-  learnGroup.setAttribute("aria-label", "Learn");
-  const studyButton = document.createElement("button");
-  studyButton.type = "button";
-  studyButton.id = "study-open";
-  studyButton.className = "mode";
-  studyButton.textContent = "Study";
-  studyButton.setAttribute("aria-pressed", "false");
-  learnGroup.append(studyButton, levels);
-  const dividers = [divider(), divider()];
-  modes.append(playGroup, dividers[0], quizGroup, dividers[1], learnGroup);
-
-  settingsButton.append(gearIcon());
-  settingsButton.addEventListener("click", openSettings);
+  const settingsButton = document.createElement("button");
+  settingsButton.type = "button";
+  settingsButton.className = "settings-open";
+  const settingsName = document.createElement("span");
+  settingsName.className = "settings-name";
+  const cityCount = document.createElement("span");
+  cityCount.className = "settings-count";
+  const settingsCopy = document.createElement("span");
+  settingsCopy.className = "settings-copy";
+  settingsCopy.append(settingsName, cityCount);
+  settingsButton.append(filterIcon(), settingsCopy);
+  settingsButton.addEventListener("click", () => {
+    closeMenus();
+    openSettings();
+  });
+  modes.append(settingsButton);
 
   function setCityCount() {
-    const show = !state.studying && state.mode === "city";
-    cityCount.hidden = !show;
+    settingsName.textContent = "Map settings";
     cityCount.textContent = cityCountLabel();
-  }
-
-  function setModeRow(studying) {
-    playGroup.hidden = studying;
-    quizGroup.hidden = studying;
-    dividers[0].hidden = studying;
-    dividers[1].hidden = studying;
-    levels.hidden = !studying;
   }
 
   const dialog = document.createElement("dialog");
@@ -202,10 +341,20 @@ function boot(data) {
   });
 
   document.addEventListener("keydown", (event) => {
-    if (event.key !== "Escape" || !state.studying || dialog.open) return;
-    if (!state.studyPlace) return;
+    if (event.key !== "Escape" || dialog.open) return;
+    if (openMenu) {
+      event.preventDefault();
+      closeMenus();
+      return;
+    }
+    if (!state.studying || panel.hidden) return;
     event.preventDefault();
     closePanel();
+  });
+
+  document.addEventListener("pointerdown", (event) => {
+    if (!openMenu || openMenu.contains(event.target)) return;
+    closeMenus();
   });
 
   document.querySelector('[data-zoom="in"]').addEventListener("click", () => map.zoomBy(1.6));
@@ -271,15 +420,8 @@ function boot(data) {
       startDaily();
       return;
     }
-    let question = null;
-    if (state.reviewing) {
-      question = questionForMisses(view(), state.misses, Math.random, state.previousKey);
-      if (!question) state.reviewing = false;
-    }
-    if (!question) {
-      question = createQuestion(view(), state.mode, state.misses, Math.random, state.previousKey);
-      question.review = (state.misses[question.key] || 0) > 0;
-    }
+    const question = createQuestion(view(), state.mode, state.categories, state.misses, Math.random, state.previousKey);
+    question.review = (state.misses[question.key] || 0) > 0;
     state.question = question;
     state.previousKey = question.key;
     state.answered = false;
@@ -472,16 +614,14 @@ function boot(data) {
 
   function settle(response, wrongId, pickedName = "") {
     if (state.answered || !state.question?.place) return;
+    hoverLabel.hidden = true;
     const correct = checkAnswer(state.question, response, catalogFor(view(), state.question));
     const scored = settleScore(state.session, state.misses, state.question.key, correct, state.assisted);
     state.answered = true;
     state.correct = correct;
     state.wrongId = correct ? null : wrongId;
     state.pickedName = correct ? "" : pickedName;
-    state.session = {
-      ...scored.session,
-      recent: [...(state.session.recent || []), { correct }].slice(-10),
-    };
+    state.session = scored.session;
     if (scored.misses !== state.misses) {
       state.misses = scored.misses;
       saveMisses(state.misses);
@@ -500,15 +640,14 @@ function boot(data) {
 
   function paintStudy() {
     app.classList.add("is-studying");
-    setModeRow(true);
     studyButton.classList.add("is-active");
     studyButton.setAttribute("aria-pressed", "true");
     studyButton.textContent = "Quiz";
-    prompt.parentElement.hidden = true;
-    dock.hidden = true;
-    studyHost.hidden = false;
     setCityCount();
-    paintScore();
+    for (const button of modes.querySelectorAll(".mode")) {
+      button.classList.remove("is-active");
+      button.setAttribute("aria-pressed", "false");
+    }
     for (const button of levels.querySelectorAll("button")) {
       const active = button.dataset.level === state.studyLevel;
       button.classList.toggle("is-active", active);
@@ -516,13 +655,18 @@ function boot(data) {
     }
     const levelName = state.studyLevel === "region" ? "region" : state.studyLevel === "city" ? "city" : "province";
     const open = state.studyPlace?.kind === state.studyLevel ? state.studyPlace : null;
-    if (open) renderPanel(open);
-    else {
-      studyHost.replaceChildren();
-      const note = document.createElement("p");
-      note.className = "study-empty";
-      renderPrompt(note, `Hover a ${levelName}, then open it.`, levelName);
-      studyHost.append(note);
+    if (open) {
+      renderPanel(open);
+      panel.hidden = false;
+      prompt.hidden = true;
+      studyNote.hidden = true;
+      studyNote.replaceChildren();
+    } else {
+      panel.hidden = true;
+      panel.replaceChildren();
+      prompt.hidden = true;
+      studyNote.hidden = false;
+      renderPrompt(studyNote, `Click on a ${levelName} to show its details.`, levelName);
     }
     map.show(null, {
       study: {
@@ -537,16 +681,15 @@ function boot(data) {
   function leaveStudy() {
     state.studying = false;
     state.studyPlace = null;
+    closePanel(true);
     hoverLabel.hidden = true;
     app.classList.remove("is-studying");
-    setModeRow(false);
     studyButton.classList.remove("is-active");
     studyButton.setAttribute("aria-pressed", "false");
     studyButton.textContent = "Study";
-    studyHost.hidden = true;
-    studyHost.replaceChildren();
-    prompt.parentElement.hidden = false;
-    dock.hidden = false;
+    prompt.hidden = false;
+    studyNote.hidden = true;
+    studyNote.replaceChildren();
   }
 
   function openPlace(place) {
@@ -554,17 +697,18 @@ function boot(data) {
     state.studyLevel = place.kind;
     paintStudy();
     hoverLabel.hidden = true;
-    studyHost.querySelector(".study-close")?.focus();
   }
 
   function closePanel() {
     state.studyPlace = null;
+    panel.hidden = true;
+    panel.replaceChildren();
     if (state.studying) paintStudy();
   }
 
   function renderPanel(place) {
     const card = studyCard(data, studyLibrary, place);
-    studyHost.replaceChildren();
+    panel.replaceChildren();
     const head = document.createElement("div");
     head.className = "study-head";
     const titles = document.createElement("div");
@@ -572,14 +716,9 @@ function boot(data) {
     eyebrow.className = "eyebrow";
     eyebrow.textContent = card.eyebrow;
     const title = document.createElement("h2");
-    title.textContent = displayName(place);
+    title.textContent = card.name;
     titles.append(eyebrow, title);
-    const close = document.createElement("button");
-    close.type = "button";
-    close.className = "study-close";
-    close.textContent = "Close";
-    close.addEventListener("click", () => closePanel());
-    head.append(titles, close);
+    head.append(titles);
     const meta = document.createElement("dl");
     meta.className = "study-meta";
     for (const row of card.rows) {
@@ -600,7 +739,7 @@ function boot(data) {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "place-link";
-      button.textContent = displayName(link.place);
+      button.textContent = link.place.name;
       button.addEventListener("click", () => openPlace(link.place));
       detail.append(button);
       wrap.append(term, detail);
@@ -613,8 +752,8 @@ function boot(data) {
       item.textContent = fact;
       list.append(item);
     }
-    studyHost.append(head, meta, list);
-    studyHost.setAttribute("aria-label", card.name);
+    panel.append(head, meta, list);
+    panel.setAttribute("aria-label", card.name);
   }
 
   function paint() {
@@ -624,57 +763,64 @@ function boot(data) {
       return;
     }
     const { question } = state;
-    setModeRow(false);
-    prompt.parentElement.hidden = false;
-    dock.hidden = false;
-    studyHost.hidden = true;
     renderPrompt(prompt, question.prompt, question.promptMark);
     hint.textContent = hintFor(question, state);
     setCityCount();
-    paintScore();
 
-    for (const button of modes.querySelectorAll(".mode")) {
-      const active = button.dataset.mode === state.mode;
-      button.classList.toggle("is-active", active);
-      button.setAttribute("aria-pressed", active ? "true" : "false");
-      if (active) button.scrollIntoView({ inline: "nearest", block: "nearest" });
+    syncMenus();
+
+    score.replaceChildren();
+    if (state.mode === "daily" && state.daily) {
+      if (state.scorePrefs.streak) {
+        const strong = document.createElement("strong");
+        strong.textContent = String(state.daily.streak);
+        const label = document.createElement("span");
+        label.textContent = "daily streak";
+        score.append(strong, label);
+      }
+    } else {
+      const ratio = document.createElement("strong");
+      ratio.textContent = `${state.session.correct}/${state.session.answered}`;
+      score.append(ratio);
+      if (state.scorePrefs.streak) {
+        const streak = document.createElement("span");
+        streak.textContent = `${state.session.streak} in a row`;
+        score.append(streak);
+      }
+      const saved = Object.keys(state.misses).length;
+      if (saved > 0 && state.scorePrefs.review) {
+        const review = document.createElement("span");
+        review.textContent = `${saved} ${saved === 1 ? "place" : "places"} to review`;
+        score.append(review);
+      }
+      if (saved > 0 && state.scorePrefs.reset) {
+        const clear = document.createElement("button");
+        clear.type = "button";
+        clear.className = "text-button";
+        clear.textContent = "Reset review list";
+        clear.addEventListener("click", () => {
+          const placeWord = saved === 1 ? "place" : "places";
+          const ok = window.confirm(
+            `Reset the review list? This forgets ${saved} ${placeWord} you missed. The score stays.`
+          );
+          if (!ok) return;
+          state.misses = {};
+          saveMisses(state.misses);
+          paint();
+        });
+        score.append(clear);
+      }
     }
 
     dock.replaceChildren();
-    dock.classList.toggle("is-click", question.mode !== "daily" && question.mode !== "type");
     if (question.mode === "daily") {
       dock.append(dailyBoard());
-    } else {
-      const slot = document.createElement("div");
-      slot.className = "dock-slot";
-      const body = document.createElement("div");
-      body.className = "dock-body";
-      const foot = document.createElement("div");
-      foot.className = "dock-foot";
-      slot.append(body, foot);
-      dock.append(slot);
-      fillAnswer(question, body, foot);
-    }
-
-    map.show(question, {
-      wrongId: state.wrongId,
-      locked: state.answered,
-      cities: view().cities,
-      outlines: state.outlines,
-      locate: state.locate !== false,
-    });
-    syncDailyClock();
-  }
-
-  function fillAnswer(question, body, foot) {
-    if (question.empty) {
+    } else if (question.empty) {
       const note = document.createElement("p");
       note.className = "hint";
       note.textContent = "Every city is turned off. Open the city list and check at least one.";
-      body.append(note);
-      return;
-    }
-    if (!state.answered && question.choices) {
+      dock.append(note);
+    } else if (!state.answered && question.choices) {
       const choices = document.createElement("div");
       choices.className = "choices";
       for (const choice of question.choices) {
@@ -685,11 +831,8 @@ function boot(data) {
         button.addEventListener("click", () => settle(choice.id, null, choice.label));
         choices.append(button);
       }
-      body.append(choices);
-      foot.append(assistRow());
-      return;
-    }
-    if (!state.answered && question.mode === "type") {
+      dock.append(choices, assistRow());
+    } else if (!state.answered && question.mode === "type") {
       const form = document.createElement("form");
       form.className = "type-form";
       const input = document.createElement("input");
@@ -731,33 +874,32 @@ function boot(data) {
         }
         settle(guess, null, "");
       });
-      body.append(form);
-      const chips = hintChips(question.place);
-      if (chips) body.append(chips);
-      foot.append(assistRow(true));
-      return;
+      dock.append(form, assistRow(true));
+    } else if (!state.answered) {
+      dock.append(assistRow());
+    } else {
+      const lead = state.correct ? "Correct. " : "Not quite. ";
+      const named = state.pickedName ? `That's ${state.pickedName}. ` : "";
+      const feedback = renderFeedback(state.correct, `${lead}${named}${describePlace(question.place)}`);
+      const next = document.createElement("button");
+      next.type = "button";
+      next.className = "next";
+      next.textContent = "Next";
+      next.addEventListener("click", ask);
+      dock.append(feedback);
+      if (state.session.answered > 0 && state.session.answered % 10 === 0) dock.append(sessionSummary());
+      dock.append(next);
     }
-    if (!state.answered) {
-      foot.append(assistRow());
-      return;
-    }
-    const lead = state.correct ? "Correct. " : "Not quite. ";
-    const named = state.pickedName ? `That's ${state.pickedName}. ` : "";
-    body.append(renderFeedback(state.correct, `${lead}${named}${describePlace(question.place)}`));
-    const fact = studyCard(data, studyLibrary, question.place).facts[0];
-    if (fact) {
-      const line = document.createElement("p");
-      line.className = "answer-fact";
-      line.textContent = fact;
-      body.append(line);
-    }
-    if (state.session.answered > 0 && state.session.answered % 10 === 0) body.append(sessionSummary());
-    const next = document.createElement("button");
-    next.type = "button";
-    next.className = "next";
-    next.textContent = "Next";
-    next.addEventListener("click", ask);
-    foot.append(next);
+
+    map.show(question, {
+      wrongId: state.wrongId,
+      locked: state.answered,
+      cities: view().cities,
+      outlines: state.outlines,
+      locate: state.locate !== false,
+      provinceOnly: question?.map === "province" && state.categories.length === 1 && state.categories[0] === "province",
+    });
+    syncDailyClock();
   }
 
   function assistRow(withHint = false) {
@@ -786,20 +928,6 @@ function boot(data) {
       }
     }
     row.append(giveUpButton());
-    return row;
-  }
-
-  function hintChips(place) {
-    const steps = hintSteps(place).slice(0, state.hintStep);
-    if (!steps.length) return null;
-    const row = document.createElement("div");
-    row.className = "hint-chips";
-    for (const step of steps) {
-      const chip = document.createElement("p");
-      chip.className = "hint-chip";
-      chip.textContent = step;
-      row.append(chip);
-    }
     return row;
   }
 
@@ -851,7 +979,7 @@ function boot(data) {
     const head = document.createElement("div");
     head.className = "settings-head";
     const title = document.createElement("h2");
-    title.textContent = "Settings";
+    title.textContent = "Quiz settings";
     const close = document.createElement("button");
     close.type = "button";
     close.className = "settings-close";
@@ -859,159 +987,65 @@ function boot(data) {
     close.addEventListener("click", () => dialog.close());
     head.append(title, close);
 
-    const outlines = document.createElement("section");
     const outlineTitle = document.createElement("h3");
     outlineTitle.textContent = "Outlines";
     const outlineNote = document.createElement("p");
     outlineNote.className = "hint";
     outlineNote.textContent = "Turn province borders off to learn each region as one shape. Turn them back on whenever you want the lines inside.";
-    outlines.append(
+
+    dialog.append(
+      head,
       outlineTitle,
       outlineNote,
       outlineToggle("Province borders", "provinces"),
-      outlineToggle("City borders", "cities")
+      outlineToggle("City borders", "cities"),
+      locateToggle(),
+      citySection()
     );
-
-    const typeIt = document.createElement("section");
-    const typeTitle = document.createElement("h3");
-    typeTitle.textContent = "Type it";
-    typeIt.append(typeTitle, locateToggle());
-
-    dialog.append(head, outlines, typeIt, citySection(), dataSection());
     if (!dialog.open) dialog.showModal();
   }
 
-  function paintScore() {
-    score.replaceChildren();
-    const main = document.createElement("div");
-    main.className = "score-main";
-    const ratio = document.createElement("strong");
-    ratio.textContent = `${state.session.correct}/${state.session.answered}`;
-    const caption = document.createElement("span");
-    caption.className = "score-caption";
-    caption.textContent = "this session";
-    main.append(ratio, caption);
-
-    const quiet = document.createElement("div");
-    quiet.className = "score-quiet";
-    const streak = document.createElement("span");
-    streak.className = "stat";
-    streak.title = "Correct answers in a row";
-    const streakNum = document.createElement("b");
-    streakNum.textContent = String(state.session.streak);
-    const streakNote = document.createElement("span");
-    streakNote.className = "stat-note";
-    streakNote.textContent = "correct";
-    streak.append(streakNum, document.createTextNode(" in a row "), streakNote);
-    quiet.append(streak);
-
-    if (state.daily) {
-      const day = document.createElement("span");
-      day.className = "stat stat-daily";
-      const dayNum = document.createElement("b");
-      dayNum.textContent = String(state.daily.streak);
-      day.append(dayNum, document.createTextNode(" daily streak"));
-      quiet.append(day);
-    }
-
-    const saved = Object.keys(state.misses).length;
-    if (saved > 0) {
-      const review = document.createElement("button");
-      review.type = "button";
-      review.className = "text-button stat-review";
-      review.textContent = `${saved} ${saved === 1 ? "place" : "places"} to review`;
-      review.addEventListener("click", startReview);
-      quiet.append(review);
-    } else {
-      const review = document.createElement("span");
-      review.className = "stat is-empty";
-      review.textContent = "0 to review";
-      quiet.append(review);
-    }
-    const recent = state.mode === "daily" ? [] : (state.session.recent || []).slice(-10);
-    if (recent.length) {
-      const dots = document.createElement("div");
-      dots.className = "session-dots";
-      dots.setAttribute("aria-hidden", "true");
-      for (const item of recent) {
-        const mark = document.createElement("span");
-        mark.className = item.correct ? "daily-square is-hit" : "daily-square is-miss";
-        dots.append(mark);
-      }
-      main.append(dots);
-    }
-    score.append(main, quiet);
-  }
-
-  function startReview() {
-    if (!Object.keys(state.misses).length) return;
-    if (state.studying) leaveStudy();
-    state.reviewing = true;
-    state.mode = "type";
-    map.resetZoom();
-    ask();
-  }
-
-  function dataSection() {
-    const wrap = document.createElement("div");
-    const title = document.createElement("h3");
-    title.textContent = "Data";
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "text-button";
-    button.textContent = "Reset review list";
-    button.addEventListener("click", () => {
-      const saved = Object.keys(state.misses).length;
-      const placeWord = saved === 1 ? "place" : "places";
-      const message = saved
-        ? `Reset the review list? This forgets ${saved} ${placeWord} you missed. The score stays.`
-        : "Reset the review list? There is nothing to forget. The score stays.";
-      if (!window.confirm(message)) return;
-      state.misses = {};
-      saveMisses(state.misses);
-      paint();
-    });
-    wrap.append(title, button);
-    return wrap;
-  }
-
-  function locateToggle() {
+  function checkRow(labelText) {
     const row = document.createElement("label");
     row.className = "check-row";
     const input = document.createElement("input");
     input.type = "checkbox";
+    input.className = "check-input";
+    const face = document.createElement("span");
+    face.className = "check-face";
+    face.setAttribute("aria-hidden", "true");
+    const text = document.createElement("span");
+    text.textContent = labelText;
+    row.append(input, face, text);
+    return { row, input };
+  }
+
+  function locateToggle() {
+    const { row, input } = checkRow("Frame the area in Type it");
     input.checked = state.locate !== false;
     input.addEventListener("change", () => {
       state.locate = input.checked;
       saveLocate(state.locate);
       paint();
     });
-    row.append(input, document.createTextNode("Frame the area in Type it"));
     return row;
   }
 
   function outlineToggle(label, key) {
-    const row = document.createElement("label");
-    row.className = "check-row";
-    const input = document.createElement("input");
-    input.type = "checkbox";
+    const { row, input } = checkRow(label);
     input.checked = state.outlines[key] !== false;
     input.addEventListener("change", () => {
       state.outlines = { ...state.outlines, [key]: input.checked };
       saveOutlines(state.outlines);
       paint();
     });
-    row.append(input, document.createTextNode(label));
     return row;
   }
 
   function citySection() {
     const wrap = document.createElement("div");
     const title = document.createElement("h3");
-    const active = view().cities.length;
-    title.textContent = active === data.cities.length
-      ? `${active} cities`
-      : `${active} of ${data.cities.length} cities`;
+    title.textContent = "Cities in this quiz";
     const actions = document.createElement("div");
     actions.className = "settings-actions";
     for (const [label, ids] of [
@@ -1033,10 +1067,7 @@ function boot(data) {
       const block = document.createElement("div");
       block.className = "region-block";
       const on = cities.filter((city) => selected.has(city.id)).length;
-      const regionRow = document.createElement("label");
-      regionRow.className = "check-row";
-      const regionInput = document.createElement("input");
-      regionInput.type = "checkbox";
+      const { row: regionRow, input: regionInput } = checkRow(region.name);
       regionInput.dataset.region = region.id;
       regionInput.checked = on === cities.length;
       regionInput.indeterminate = on > 0 && on < cities.length;
@@ -1048,14 +1079,10 @@ function boot(data) {
         }
         commitCities(next.size === data.cities.length ? null : [...next]);
       });
-      regionRow.append(regionInput, document.createTextNode(displayName(region)));
       const cityRows = document.createElement("div");
       cityRows.className = "region-cities";
       for (const city of cities) {
-        const row = document.createElement("label");
-        row.className = "check-row";
-        const input = document.createElement("input");
-        input.type = "checkbox";
+        const { row, input } = checkRow(city.label || city.name);
         input.dataset.city = city.id;
         input.checked = selected.has(city.id);
         input.addEventListener("change", () => {
@@ -1064,7 +1091,6 @@ function boot(data) {
           else next.delete(city.id);
           commitCities(next.size === data.cities.length ? null : [...next]);
         });
-        row.append(input, document.createTextNode(city.label || city.name));
         cityRows.append(row);
       }
       block.append(regionRow, cityRows);
@@ -1236,10 +1262,28 @@ function gearIcon() {
   svg.setAttribute("viewBox", "0 0 24 24");
   svg.setAttribute("aria-hidden", "true");
   const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("fill", "none");
+  path.setAttribute("stroke", "currentColor");
+  path.setAttribute("stroke-width", "1.75");
+  path.setAttribute("stroke-linecap", "round");
+  path.setAttribute("stroke-linejoin", "round");
+  path.setAttribute(
+    "d",
+    "M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4z M19.4 13.1a7.6 7.6 0 0 0 .06-1.1 7.6 7.6 0 0 0-.06-1.1l2.05-1.6-2-3.46-2.5.95a7.4 7.4 0 0 0-1.9-1.1L14.5 2h-5l-.55 2.69a7.4 7.4 0 0 0-1.9 1.1l-2.5-.95-2 3.46 2.05 1.6a7.6 7.6 0 0 0-.06 1.1c0 .37.02.74.06 1.1l-2.05 1.6 2 3.46 2.5-.95c.57.46 1.2.84 1.9 1.1L9.5 22h5l.55-2.69a7.4 7.4 0 0 0 1.9-1.1l2.5.95 2-3.46-2.05-1.6z"
+  );
+  svg.append(path);
+  return svg;
+}
+
+function filterIcon() {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 16 16");
+  svg.setAttribute("aria-hidden", "true");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
   path.setAttribute("fill", "currentColor");
   path.setAttribute(
     "d",
-    "M19.14 12.94a7.4 7.4 0 0 0 .05-.94 7.4 7.4 0 0 0-.05-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.2 7.2 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.5.42l-.36 2.54a7.2 7.2 0 0 0-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 8.84a.5.5 0 0 0 .12.64l2.03 1.58a7.4 7.4 0 0 0-.05.94c0 .32.02.63.05.94L2.83 14.52a.5.5 0 0 0-.12.64l1.92 3.32c.13.23.4.32.64.22l2.39-.96c.5.39 1.05.71 1.63.94l.36 2.54c.05.24.26.42.5.42h3.84c.24 0 .45-.18.5-.42l.36-2.54c.58-.23 1.13-.55 1.63-.94l2.39.96c.24.1.51 0 .64-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z"
+    "M1.25 2.4h13.5a.7.7 0 0 1 .54 1.15L10 8.7v4.15a.7.7 0 0 1-1.02.62l-2.3-1.15a.7.7 0 0 1-.38-.62V8.7L.71 3.55a.7.7 0 0 1 .54-1.15Z"
   );
   svg.append(path);
   return svg;
@@ -1268,15 +1312,18 @@ function hintFor(question, state) {
   if (state.answered) return "";
   if (question.empty) return "Choose which cities to practice.";
   if (question.review && question.mode !== "type") return "You've missed this before, so it will keep coming back.";
-  if (question.mode === "city" && question.choices) return "The highlighted city stays gold until you answer.";
-  if (question.mode === "city") return "Drag to move the map. Pinch or use + to reach a small city.";
+  if (question.mode === "mcq") {
+    const kind = question.place?.kind || "place";
+    return `The highlighted ${kind} stays gold until you answer.`;
+  }
   if (question.mode === "type") {
     const parts = [];
+    if (state.hintStep > 0) parts.push(...hintSteps(question.place).slice(0, state.hintStep));
     if (question.review) parts.push("You've missed this before, so it will keep coming back.");
     parts.push("Close spellings count, and so do older names.");
     return parts.join(" ");
   }
-  if (question.mode === "province") return "Drag to move the map. Pinch or use + to reach small islands.";
-  if (question.mode === "which-region") return "The highlighted province stays gold until you answer.";
+  if (question.map === "city") return "Drag to move the map. Pinch or use + to reach a small city.";
+  if (question.map === "province") return "Drag to move the map. Pinch or use + to reach small islands.";
   return "Tap the matching shape. Drag if you need to move the map.";
 }

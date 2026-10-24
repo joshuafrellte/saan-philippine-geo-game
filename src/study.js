@@ -1,9 +1,37 @@
+const REGION_NUMBERS = {
+  ncr: "NCR",
+  car: "CAR",
+  "region-1": "I",
+  "region-2": "II",
+  "region-3": "III",
+  calabarzon: "IV-A",
+  mimaropa: "IV-B",
+  "region-5": "V",
+  "region-6": "VI",
+  "region-7": "VII",
+  "region-8": "VIII",
+  "region-9": "IX",
+  "region-10": "X",
+  "region-11": "XI",
+  "region-12": "XII",
+  caraga: "XIII",
+  nir: "XVIII",
+  barmm: "BARMM",
+};
+
+function regionEyebrow(place) {
+  const number = REGION_NUMBERS[place.id];
+  if (!number) return "Region";
+  if (/^(NCR|CAR|BARMM)$/.test(number)) return number;
+  return `Region ${number}`;
+}
+
 export function studyCard(atlas, library, place) {
   const entry = library[place.id] || {};
   const facts = Array.isArray(entry.facts) ? entry.facts : [];
   if (place.kind === "region") {
     return {
-      eyebrow: "Region",
+      eyebrow: regionEyebrow(place),
       name: place.name,
       rows: [{ label: "Regional center", text: entry.seat || "No regional center has been settled." }],
       links: [],

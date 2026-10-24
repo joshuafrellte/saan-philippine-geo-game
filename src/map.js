@@ -1,8 +1,6 @@
 import { geoMercator, geoPath } from "d3-geo";
 import { select } from "d3-selection";
 import { zoom, zoomIdentity } from "d3-zoom";
-import { fitTransform, frameSpec } from "./frame.js";
-import { displayName } from "./quiz.js";
 import { regionOutline } from "./outline.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -32,21 +30,12 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
   const screen = element("g", { class: "screen-layer" });
   const ringDark = element("circle", {
     class: "target-ring target-ring-dark",
-    r: RING_RADIUS + 5,
+    r: RING_RADIUS,
     "pointer-events": "none",
   });
   const ringLight = element("circle", {
     class: "target-ring",
-    r: RING_RADIUS - 2,
-    "pointer-events": "none",
-  });
-  const leader = element("line", {
-    class: "map-leader",
-    "pointer-events": "none",
-  });
-  const plate = element("rect", {
-    class: "map-plate",
-    rx: "7",
+    r: RING_RADIUS,
     "pointer-events": "none",
   });
   const label = element("text", {
@@ -54,7 +43,7 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
     "text-anchor": "middle",
     "pointer-events": "none",
   });
-  screen.append(ringDark, ringLight, leader, plate, label);
+  screen.append(ringDark, ringLight, label);
   svg.replaceChildren(viewport, screen);
 
   const selection = select(svg);
@@ -75,6 +64,7 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
   let labelPoint = null;
   let labelText = "";
   let locateEnabled = true;
+  let solidProvinces = false;
   let shownKey = null;
   let framedKey = null;
   let holdCountry = false;
@@ -89,9 +79,7 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
   }
 
   function applyProvinceFade(k) {
-    const city = Math.min(1, Math.max(0, (k - 1) / 2));
-    svg.style.setProperty("--city-outline-alpha", city.toFixed(3));
-    if (!QUIET_PROVINCE_BORDERS) {
+    if (!QUIET_PROVINCE_BORDERS || solidProvinces) {
       land.style.removeProperty("--province-alpha");
       land.style.removeProperty("--province-width");
       return;
@@ -115,41 +103,13 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
     }
     const showLabel = Boolean(labelText && labelPoint);
     label.setAttribute("display", showLabel ? "inline" : "none");
-    plate.setAttribute("display", "none");
-    leader.setAttribute("display", "none");
-    if (!showLabel) return;
-    label.textContent = labelText;
-    const anchorX = transform.applyX(labelPoint[0]);
-    const anchorY = transform.applyY(labelPoint[1]);
-    const textWidth = label.getComputedTextLength();
-    const shapeWidth = targetScreenWidth();
-    const lead = shapeWidth > 0 && textWidth > shapeWidth + 8;
-    const x = lead ? anchorX + textWidth / 2 + 22 : anchorX;
-    const y = lead ? anchorY - 6 : anchorY + RING_RADIUS + 18;
-    label.setAttribute("x", x);
-    label.setAttribute("y", y);
-    if (lead) {
-      leader.setAttribute("display", "inline");
-      leader.setAttribute("x1", anchorX);
-      leader.setAttribute("y1", anchorY);
-      leader.setAttribute("x2", x - textWidth / 2 - 8);
-      leader.setAttribute("y2", y - 4);
+    if (showLabel) {
+      const x = transform.applyX(labelPoint[0]);
+      const y = transform.applyY(labelPoint[1]);
+      label.setAttribute("x", x);
+      label.setAttribute("y", y + RING_RADIUS + 16);
+      label.textContent = labelText;
     }
-    const box = label.getBBox();
-    if (box.width > 0) {
-      plate.setAttribute("display", "inline");
-      plate.setAttribute("x", box.x - 7);
-      plate.setAttribute("y", box.y - 4);
-      plate.setAttribute("width", box.width + 14);
-      plate.setAttribute("height", box.height + 8);
-    }
-  }
-
-  function targetScreenWidth() {
-    const feature = question?.place?.feature;
-    if (!feature) return 0;
-    const bounds = path.bounds(feature);
-    return Math.abs(transform.applyX(bounds[1][0]) - transform.applyX(bounds[0][0]));
   }
 
   const behavior = zoom()
@@ -164,7 +124,6 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
       viewport.setAttribute("transform", event.transform);
       applyProvinceFade(event.transform.k);
       placeOverlay();
-      placeInsetDot();
       if (event.sourceEvent && question?.mode === "type") playerAdjusted = true;
     });
 
@@ -205,10 +164,7 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
     if (study?.selectedId === id) classes.push("is-target");
     if (study || inert) return classes.join(" ");
     if (wrongId && wrongId === id) classes.push("is-wrong");
-    else if (locked && !question?.highlightId && question?.targetId === id) {
-      classes.push("is-correct");
-      if (wrongId && !question.choices) classes.push("is-pulse");
-    }
+    else if (locked && !question?.highlightId && question?.targetId === id) classes.push("is-correct");
     else if (question?.highlightId === id) {
       classes.push("is-target");
       if (locked && question.mode === "type") classes.push("is-revealed");
@@ -222,7 +178,7 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
     return [x, y];
   }
 
-  function addShape(feature, { clickable, underlay = false, noStroke = false, quiet = false, label: shapeLabel = "", anonymous = false }) {
+  function addShape(feature, { clickable, underlay = false, noStroke = false, quiet = false, faint = false, label: shapeLabel = "", anonymous = false }) {
     const id = feature.properties.id;
     let className = `${classesFor(id, {
       inert: !clickable,
@@ -230,7 +186,10 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
       quiet,
       landmark: feature.properties.kind === "landmark",
     })}${noStroke ? " no-stroke" : ""}`;
-    if (feature.properties.kind === "province" && !noStroke) className += " is-province";
+    if (faint) className += " is-faint";
+    if (feature.properties.kind === "province" && !noStroke && !study && !faint) {
+      className += solidProvinces ? " is-province-solid" : " is-province";
+    }
     const shape = element("path", {
       d: path(feature) || "",
       class: className,
@@ -245,9 +204,11 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
       shape.setAttribute("pointer-events", "none");
     } else {
       if (study) {
-        const name = shapeLabel || feature.properties.name || "";
-        shape.addEventListener("pointerenter", (event) => onHover(name, event));
-        shape.addEventListener("pointermove", (event) => onHover(name, event));
+        const name = shapeLabel || labelFor(id, feature.properties.name || "");
+        const show = (event) => onHover(name, event);
+        shape.addEventListener("pointerenter", show);
+        shape.addEventListener("pointermove", show);
+        shape.addEventListener("pointerleave", () => onHover("", null));
       }
       shape.addEventListener("click", () => {
         if (suppressClick) {
@@ -284,26 +245,39 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
     const level = study.level;
     const provinceBorders = outlines.provinces !== false;
     const cityBorders = outlines.cities !== false;
+    if (level === "region") {
+      for (const region of atlas.regions) {
+        if (!region.feature) continue;
+        addShape(region.feature, {
+          clickable: true,
+          noStroke: true,
+          label: labelFor(region.id, region.name),
+        });
+      }
+      if (provinceBorders) {
+        for (const province of atlas.provinces) {
+          if (!province.feature) continue;
+          addShape(province.feature, { clickable: false, faint: true });
+        }
+      }
+      appendRegionOutlines();
+      return;
+    }
+
     for (const region of atlas.regions) {
       if (!region.feature) continue;
-      addShape(region.feature, {
-        clickable: level === "region",
-        noStroke: level !== "region",
-        label: labelFor(region.id, region.name),
-      });
+      addShape(region.feature, { clickable: false, noStroke: true });
     }
-    if (level === "region") return;
-
     for (const province of atlas.provinces) {
       if (!province.feature) continue;
       addShape(province.feature, {
         clickable: level === "province",
-        noStroke: !provinceBorders,
+        noStroke: level === "city" && !provinceBorders,
         label: labelFor(province.id, province.name),
       });
     }
-    if (provinceBorders) appendRegionOutlines();
     if (level !== "city") return;
+    if (provinceBorders) appendRegionOutlines();
 
     for (const city of atlas.cities) {
       if (!city.feature) continue;
@@ -316,9 +290,10 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
   }
 
   function draw() {
+    applyProvinceFade(transform.k);
     ringPoint = null;
     labelPoint = null;
-    labelText = !study && locked && question?.place ? displayName(question.place) : "";
+    labelText = !study && locked && question?.place ? question.place.label || question.place.name || "" : "";
     land.replaceChildren();
     if (!path) {
       placeOverlay();
@@ -371,7 +346,7 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
       addShape(province.feature, { clickable: true, noStroke: !provinceBorders });
     }
     if (provinceBorders) appendRegionOutlines();
-    if (outlines.cities !== false && question?.map === "province") {
+    if (!solidProvinces && outlines.cities !== false && question?.map === "province") {
       for (const city of activeCities) {
         if (!city.feature) continue;
         const outline = element("path", {
@@ -394,18 +369,37 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
     return { geo, k: transform.k };
   }
 
+  function landmarkFeature(id) {
+    return atlas.provincesGeo.features.find(
+      (feature) => feature.properties?.kind === "landmark" && feature.properties?.id === id
+    ) || null;
+  }
+
   function frameFeature() {
-    if (!question?.place || question.mode !== "type") return null;
-    return frameSpec(question.place, atlas.provincesGeo.features);
+    const place = question?.place;
+    if (!place || question.mode !== "type") return null;
+    if (place.kind === "province") return place.regionRecord?.feature || null;
+    if (place.kind === "city") {
+      if (place.provinceRecord?.feature) return place.provinceRecord.feature;
+      return landmarkFeature(place.region) || place.regionRecord?.feature || null;
+    }
+    return null;
   }
 
   function transformFor(feature) {
     const width = svg.clientWidth;
     const height = svg.clientHeight;
-    if (!feature || width < 10 || height < 10) return zoomIdentity;
-    const coverage = question?.place?.kind === "region" ? 0.7 : 0.62;
-    const next = fitTransform(path.bounds(feature), width, height, { coverage });
-    return zoomIdentity.translate(next.x, next.y).scale(next.k);
+    if (width < 10 || height < 10) return null;
+    const bounds = path.bounds(feature);
+    const dx = bounds[1][0] - bounds[0][0];
+    const dy = bounds[1][1] - bounds[0][1];
+    if (!(dx > 0) || !(dy > 0)) return null;
+    const cx = (bounds[0][0] + bounds[1][0]) / 2;
+    const cy = (bounds[0][1] + bounds[1][1]) / 2;
+    let scale = Math.min((width * 0.62) / dx, (height * 0.62) / dy);
+    scale = Math.max(1, Math.min(8, scale));
+    if (scale <= 1.05) return zoomIdentity;
+    return zoomIdentity.translate(width / 2 - scale * cx, height / 2 - scale * cy).scale(scale);
   }
 
   function applyTransform(next) {
@@ -447,7 +441,9 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
     if (framedKey === question.key) return;
     framedKey = question.key;
     if (!locateEnabled || holdCountry || playerAdjusted) return;
-    easeTo(transformFor(frameFeature()));
+    const feature = frameFeature();
+    if (!feature) return;
+    easeTo(transformFor(feature));
   }
 
   function fit() {
@@ -481,47 +477,10 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
         applyTransform(zoomIdentity.translate(width / 2 - k * px[0], height / 2 - k * px[1]).scale(k));
       }
     } else if (restoreFrame) {
-      applyTransform(transformFor(frameFeature()));
+      const feature = frameFeature();
+      const next = feature ? transformFor(feature) : null;
+      if (next) applyTransform(next);
     }
-    drawInset();
-  }
-
-  const locator = document.querySelector("#locator");
-  let insetProjection = null;
-  let insetDot = null;
-
-  function drawInset() {
-    if (!locator || !projection) return;
-    locator.replaceChildren();
-    const inset = element("svg", { viewBox: "0 0 72 96" });
-    insetProjection = geoMercator().fitExtent([[4, 4], [68, 92]], {
-      type: "FeatureCollection",
-      features: atlas.regions.map((region) => region.feature).filter(Boolean),
-    });
-    const insetPath = geoPath(insetProjection);
-    for (const region of atlas.regions) {
-      if (!region.feature) continue;
-      inset.append(element("path", { d: insetPath(region.feature) || "", class: "locator-land" }));
-    }
-    insetDot = element("circle", { class: "locator-dot", r: "3.5" });
-    inset.append(insetDot);
-    locator.append(inset);
-    placeInsetDot();
-  }
-
-  function placeInsetDot() {
-    if (!locator || !insetDot || !insetProjection) return;
-    const framed = question?.mode === "type" && !study && transform.k > 1.15;
-    locator.hidden = !framed;
-    if (!framed) return;
-    const center = geographicCenter();
-    const point = center ? insetProjection(center.geo) : null;
-    if (!point || !Number.isFinite(point[0]) || !Number.isFinite(point[1])) {
-      locator.hidden = true;
-      return;
-    }
-    insetDot.setAttribute("cx", point[0]);
-    insetDot.setAttribute("cy", point[1]);
   }
 
   function frameQuestion(duringAnswer = false) {
@@ -535,8 +494,9 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
   fit();
 
   return {
-    show(nextQuestion, { wrongId: nextWrong = null, locked: nextLocked = false, cities = null, outlines: nextOutlines = null, study: nextStudy = null, locate: nextLocate = null } = {}) {
+    show(nextQuestion, { wrongId: nextWrong = null, locked: nextLocked = false, cities = null, outlines: nextOutlines = null, study: nextStudy = null, locate: nextLocate = null, provinceOnly = false } = {}) {
       if (typeof nextLocate === "boolean") locateEnabled = nextLocate;
+      solidProvinces = Boolean(provinceOnly);
       study = nextStudy;
       question = nextStudy ? null : nextQuestion;
       wrongId = nextStudy ? null : nextWrong;

@@ -22,9 +22,7 @@
           <h1>Saan<span>?</span></h1>
         </div>
         <div class="top-side">
-          <div class="score" id="score" aria-label="Score"></div>
-          <span id="city-count" class="city-count" hidden></span>
-          <button type="button" id="settings-open" class="gear" aria-label="Settings"></button>
+          <button type="button" id="study-open" class="study-open" aria-pressed="false">Study</button>
         </div>
       </header>
       <nav class="modes" id="modes" aria-label="Quiz modes"></nav>
@@ -32,7 +30,6 @@
         <div class="map-wrap">
           <svg id="map" role="img" aria-label="Map of the Philippines"></svg>
           <p id="hover-label" class="hover-label" hidden aria-hidden="true"></p>
-          <div id="locator" class="locator" hidden aria-hidden="true"></div>
           <div class="zoom-controls" aria-label="Map zoom">
             <button type="button" data-zoom="in" aria-label="Zoom in">+</button>
             <button type="button" data-zoom="out" aria-label="Zoom out">−</button>
@@ -43,11 +40,12 @@
       </div>
       <div class="side">
         <section class="prompt">
+          <div class="score" id="score" aria-label="Score"></div>
           <p id="prompt" aria-live="polite"></p>
           <p id="hint" class="hint"></p>
+          <div id="study-card" class="study-card" hidden></div>
         </section>
         <section class="dock" id="dock"></section>
-        <section id="study-host" class="study-host" hidden></section>
       </div>
       </div>
     </div>

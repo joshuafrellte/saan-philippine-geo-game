@@ -4,11 +4,13 @@ Saan? is a browser quiz for Philippine regions, provinces, and cities. The name 
 
 ## How to play
 
-Pick a mode from the row under the title. The place you are looking for is shown in gold in the question. Drag the map to move it. Pinch, or use the + and - buttons, to zoom. Reset returns to the whole country.
+The row under the title has three controls. Daily is the day's province. Category checks regions, provinces, cities, or any mix. All checks every category, and the last checked category stays on. Mode chooses how you answer: locate it on the map, pick its name from four choices, or type it.
+
+The place you are looking for is shown in gold in the question, except in multiple choice and Type it, where the gold word is the kind of place. Drag the map to move it. Pinch, or use the + and - buttons, to zoom. Reset returns to the whole country.
 
 A wrong answer turns the feedback card red. A right answer turns it green. The card also names the regional center, capital, or host province, plus older names when the place has them.
 
-Places you miss come back more often. The header counts them as "to review." Clear forgets that list. A correct answer lightens a miss by one.
+Places you miss come back more often. The score above the question counts them as "to review." The button beside Study can hide the streak, that count, and the reset button. Reset forgets the list. A correct answer lightens a miss by one.
 
 ### Daily
 
@@ -18,29 +20,25 @@ Each wrong guess shows how far away it was, and which way to go. A streak counts
 
 As you type, a list of provinces appears. Arrow keys move through it. Enter or a click submits the highlighted name. A province you already guessed is left off the list. Close spellings count, and so do older names.
 
-### Regions
+### Category
 
-Click the named region on the map.
+Check Regions, Provinces, Cities, or All. A question uses one of the checked categories. The map shows that category, not every layer at once. Provinces alone leaves city lines off, and province borders are drawn as dark as the region borders.
 
-### Provinces
-
-Click the named province. Pinch or use + to reach small islands.
-
-### Cities
-
-The question is either "Click this city" or "Which region is this city in?" The second kind keeps the city gold until you answer, then offers four regions.
-
-The dashed badge shows how many cities are in the quiz. Open it to turn cities on or off, by city or by whole region. Major cities is a shorter set. Turn every city off and the quiz asks you to pick at least one.
+The dashed badge shows how many cities are in the quiz. Open it to turn cities on or off, by city or by whole region. Major cities is a shorter set. Turn every city off, with only Cities checked, and the quiz asks you to pick at least one. If another category is also checked, city questions are skipped.
 
 The same panel can hide province borders, so a region reads as one shape, or hide city borders.
 
-### Which region?
+### Locate
 
-A province stays gold until you answer. Pick its region from four choices.
+The question names the place. Click it on the map. Drag to look around, and pinch or use + to reach a small island or city. Hovering a shape does not reveal its name.
+
+### Multiple choice
+
+One shape stays gold until you answer. Pick its name from four choices in the same category.
 
 ### Type it
 
-The map highlights a region, a province, or a city. Type its name. The suggestion list only includes that kind of place, so a city question never offers provinces or regions. Two cities that share a name stay separate, such as San Carlos, Negros Occidental and San Carlos, Pangasinan.
+The map highlights a region, a province, or a city from the categories you checked. Type its name. The suggestion list only includes that kind of place, so a city question never offers provinces or regions. Two cities that share a name stay separate, such as San Carlos, Negros Occidental and San Carlos, Pangasinan.
 
 Close spellings count, and so do older names. Dragging and zooming still work. Clicking a shape does not answer.
 

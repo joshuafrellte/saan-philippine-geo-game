@@ -1,14 +1,40 @@
 import { matchesPlace } from "./fuzzy.js";
 import { pickWeighted, recordAnswer } from "./memory.js";
 
-export const MODES = [
-  { id: "daily", label: "Daily" },
+export const CATEGORIES = [
   { id: "region", label: "Regions" },
   { id: "province", label: "Provinces" },
   { id: "city", label: "Cities" },
-  { id: "which-region", label: "Which region?" },
-  { id: "type", label: "Type it" },
 ];
+
+const CATEGORY_IDS = CATEGORIES.map((item) => item.id);
+
+/** Button text for the checked set. All three reads as All. */
+export function categoryLabel(selected) {
+  const ids = CATEGORY_IDS.filter((id) => selected.includes(id));
+  if (ids.length === CATEGORY_IDS.length) return "All";
+  return ids.map((id) => CATEGORIES.find((item) => item.id === id).label).join(", ");
+}
+
+/**
+ * Next checked set after a checklist click. Null means the click changes nothing:
+ * All is already on, or the last category would be cleared.
+ */
+export function applyCategoryCheck(selected, id, checked) {
+  const set = new Set(selected.filter((item) => CATEGORY_IDS.includes(item)));
+  if (id === "all") {
+    if (CATEGORY_IDS.every((item) => set.has(item))) return null;
+    return CATEGORY_IDS.slice();
+  }
+  if (!CATEGORY_IDS.includes(id)) return null;
+  if (checked) {
+    set.add(id);
+    return CATEGORY_IDS.filter((item) => set.has(item));
+  }
+  if (set.size <= 1 && set.has(id)) return null;
+  set.delete(id);
+  return CATEGORY_IDS.filter((item) => set.has(item));
+}
 
 function pickAvoiding(items, keyOf, misses, random, previousKey) {
   const pool =
@@ -27,47 +53,35 @@ function shuffle(list, random) {
   return copy;
 }
 
-const DISPLAY_NAMES = {
-  calabarzon: "Calabarzon",
-  mimaropa: "Mimaropa",
-  "region-12": "Soccsksargen",
-};
-
-/** Title case for the three regional acronyms. The stored name stays official. */
-export function displayName(place) {
-  if (!place) return "";
-  return DISPLAY_NAMES[place.id] || place.label || place.name || "";
-}
-
 function regionPhrase(name) {
   const needsThe = /(Region|Peninsula|Valley|Visayas)$/.test(name) || /^(National|Cordillera|Ilocos)/.test(name);
   return needsThe ? `the ${name}` : name;
 }
 
-function shown(place) {
-  return displayName(place);
-}
-
 export function describePlace(place) {
   const alias = place.aliases?.length ? ` Also called ${place.aliases.join(", ")}.` : "";
-  const regionName = place.regionRecord ? shown(place.regionRecord) : "an unknown region";
+  const regionName = place.regionRecord?.name || "an unknown region";
   if (place.kind === "region") {
-    return `${shown(place)} has its regional center in ${place.capital}.${alias}`;
+    return `${place.name} has its regional center in ${place.capital}.${alias}`;
   }
   if (place.kind === "city") {
     const host = !place.provinceRecord
       ? ""
       : place.independent
-        ? ` It governs itself, separate from ${shown(place.provinceRecord)}.`
-        : ` It is in ${shown(place.provinceRecord)}.`;
-    return `${shown(place)} is in ${regionPhrase(regionName)}.${host}${alias}`;
+        ? ` It governs itself, separate from ${place.provinceRecord.name}.`
+        : ` It is in ${place.provinceRecord.name}.`;
+    return `${place.label || place.name} is in ${regionPhrase(regionName)}.${host}${alias}`;
   }
-  return `${shown(place)} has its capital in ${place.capital}, in ${regionPhrase(regionName)}.${alias}`;
+  return `${place.name} has its capital in ${place.capital}, in ${regionPhrase(regionName)}.${alias}`;
 }
 
-function choicesFor(regions, correctId, random) {
-  const correct = regions.find((region) => region.id === correctId);
-  const others = regions.filter((region) => region.id !== correctId);
+function choiceLabel(place) {
+  return place.label || place.name;
+}
+
+function choicesFor(places, correctId, random) {
+  const correct = places.find((place) => place.id === correctId);
+  const others = places.filter((place) => place.id !== correctId);
   const picked = [];
   const pool = others.slice();
   while (picked.length < 3 && pool.length) {
@@ -75,153 +89,81 @@ function choicesFor(regions, correctId, random) {
     picked.push(pool.splice(index, 1)[0]);
   }
   return shuffle(
-    [correct, ...picked].filter(Boolean).map((region) => ({ id: region.id, label: shown(region) })),
+    [correct, ...picked].filter(Boolean).map((place) => ({ id: place.id, label: choiceLabel(place) })),
     random
   );
 }
 
-export function createQuestion(atlas, mode, misses = {}, random = Math.random, previousKey = null) {
-  if (mode === "region") {
-    const region = pickAvoiding(atlas.regions, (item) => `region:${item.id}`, misses, random, previousKey);
-    const phrase = regionPhrase(shown(region));
-    return {
-      mode,
-      key: `region:${region.id}`,
-      prompt: `Click ${phrase}`,
-      promptMark: phrase,
-      map: "region",
-      highlightId: null,
-      targetId: region.id,
-      answerId: region.id,
-      place: region,
-      choices: null,
-    };
-  }
+function placesFor(atlas, kind) {
+  if (kind === "region") return atlas.regions;
+  if (kind === "province") return atlas.provinces;
+  return atlas.cities;
+}
 
-  if (mode === "province") {
-    const province = pickAvoiding(
-      atlas.provinces,
-      (item) => `province:${item.id}`,
-      misses,
-      random,
-      previousKey
-    );
-    return {
-      mode,
-      key: `province:${province.id}`,
-      prompt: `Click ${shown(province)}`,
-      promptMark: shown(province),
-      map: "province",
-      highlightId: null,
-      targetId: province.id,
-      answerId: province.id,
-      place: province,
-      choices: null,
-    };
-  }
-
-  if (mode === "which-region") {
-    const province = pickAvoiding(
-      atlas.provinces,
-      (item) => `province:${item.id}`,
-      misses,
-      random,
-      previousKey
-    );
-    return {
-      mode,
-      key: `province:${province.id}`,
-      prompt: `Which region is ${shown(province)} in?`,
-      promptMark: shown(province),
-      map: "province",
-      highlightId: province.id,
-      targetId: province.id,
-      answerId: province.region,
-      place: province,
-      choices: choicesFor(atlas.regions, province.region, random),
-    };
-  }
-
-  if (mode === "city") {
-    if (!atlas.cities.length) {
-      return {
-        mode,
-        key: "city:none",
-        prompt: "Turn on at least one city",
-        map: "province",
-        highlightId: null,
-        targetId: null,
-        answerId: null,
-        place: null,
-        choices: null,
-        empty: true,
-      };
-    }
-    const city = pickAvoiding(atlas.cities, (item) => `city:${item.id}`, misses, random, previousKey);
-    const askRegion = random() >= 0.5;
-    const label = shown(city);
-    return {
-      mode,
-      key: `city:${city.id}`,
-      prompt: askRegion ? `Which region is ${label} in?` : `Click ${label}`,
-      promptMark: label,
-      map: "city",
-      highlightId: askRegion ? city.id : null,
-      targetId: city.id,
-      answerId: askRegion ? city.region : city.id,
-      place: city,
-      choices: askRegion ? choicesFor(atlas.regions, city.region, random) : null,
-    };
-  }
-
-  const roll = random();
-  let kind = roll < 0.34 ? "region" : roll < 0.67 ? "province" : "city";
-  if (kind === "city" && !atlas.cities.length) kind = "province";
-  const pool = kind === "region" ? atlas.regions : kind === "province" ? atlas.provinces : atlas.cities;
-  const place = pickAvoiding(pool, (item) => `${kind}:${item.id}`, misses, random, previousKey);
-  const prompt = `Type the name of this ${kind}`;
+function emptyCityQuestion(mode) {
   return {
-    mode: "type",
-    key: `${kind}:${place.id}`,
-    prompt,
-    promptMark: kind,
-    map: kind,
-    highlightId: place.id,
-    targetId: place.id,
-    answerId: place.id,
-    place,
+    mode,
+    key: "city:none",
+    prompt: "Turn on at least one city",
+    promptMark: "",
+    map: "province",
+    highlightId: null,
+    targetId: null,
+    answerId: null,
+    place: null,
     choices: null,
+    empty: true,
   };
 }
 
-/** One Type it question drawn from places the player has missed. */
-export function questionForMisses(atlas, misses, random = Math.random, previousKey = null) {
-  const places = [];
-  for (const key of Object.keys(misses || {})) {
-    if (!(misses[key] > 0)) continue;
-    const split = key.indexOf(":");
-    if (split < 0) continue;
-    const kind = key.slice(0, split);
-    const id = key.slice(split + 1);
-    const pool = kind === "region" ? atlas.regions : kind === "province" ? atlas.provinces : kind === "city" ? atlas.cities : null;
-    const place = pool?.find((item) => item.id === id);
-    if (place) places.push(place);
+export function createQuestion(atlas, mode, categories, misses = {}, random = Math.random, previousKey = null) {
+  const wanted = CATEGORY_IDS.filter((id) => (categories || []).includes(id));
+  const available = wanted.filter((id) => id !== "city" || atlas.cities.length);
+  if (!available.length) return emptyCityQuestion(mode);
+  const kind = available.length === 1 ? available[0] : available[Math.floor(random() * available.length)];
+  const pool = placesFor(atlas, kind);
+  const place = pickAvoiding(pool, (item) => `${kind}:${item.id}`, misses, random, previousKey);
+  const key = `${kind}:${place.id}`;
+  if (mode === "mcq") {
+    return {
+      mode,
+      key,
+      prompt: `Which ${kind} is this?`,
+      promptMark: kind,
+      map: kind,
+      highlightId: place.id,
+      targetId: place.id,
+      answerId: place.id,
+      place,
+      choices: choicesFor(pool, place.id, random),
+    };
   }
-  if (!places.length) return null;
-  const place = pickAvoiding(places, (item) => `${item.kind}:${item.id}`, misses, random, previousKey);
-  const kind = place.kind;
+  if (mode === "type") {
+    return {
+      mode: "type",
+      key,
+      prompt: `Type the name of this ${kind}`,
+      promptMark: kind,
+      map: kind,
+      highlightId: place.id,
+      targetId: place.id,
+      answerId: place.id,
+      place,
+      choices: null,
+    };
+  }
+  const phrase = kind === "region" ? regionPhrase(place.name) : choiceLabel(place);
   return {
-    mode: "type",
-    key: `${kind}:${place.id}`,
-    prompt: `Type the name of this ${kind}`,
-    promptMark: kind,
+    mode: "locate",
+    key,
+    prompt: `Click ${phrase}`,
+    promptMark: phrase,
     map: kind,
-    highlightId: place.id,
+    highlightId: null,
     targetId: place.id,
     answerId: place.id,
     place,
     choices: null,
-    review: true,
   };
 }
 
@@ -237,7 +179,7 @@ function letterCount(name) {
 /** Two steps before the reveal. Region questions never give the region name away. */
 export function hintSteps(place) {
   if (!place?.name) return [];
-  const name = shown(place);
+  const name = place.name;
   const letter = firstLetter(name);
   const count = letterCount(name);
   const spelling = letter
@@ -250,7 +192,7 @@ export function hintSteps(place) {
       spelling,
     ];
   }
-  const regionName = place.regionRecord ? shown(place.regionRecord) : "";
+  const regionName = place.regionRecord?.name;
   const where = regionName ? `It is in ${regionPhrase(regionName)}.` : "It sits in one of the regions.";
   return [where, spelling];
 }
@@ -280,7 +222,7 @@ export function regionWeights(atlas, misses) {
   const totals = new Map();
   function add(region, weight) {
     if (!region || !(weight > 0)) return;
-    const current = totals.get(region.id) || { id: region.id, name: displayName(region), weight: 0 };
+    const current = totals.get(region.id) || { id: region.id, name: region.name, weight: 0 };
     current.weight += weight;
     totals.set(region.id, current);
   }

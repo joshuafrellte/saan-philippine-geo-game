@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildAtlas } from "./atlas.js";
-import { loadLocate, majorCityIds, resolveCities, saveLocate } from "./settings.js";
+import { loadLocate, loadScorePrefs, majorCityIds, resolveCities, saveLocate, saveScorePrefs } from "./settings.js";
 import places from "../data/places.json";
 import provincesGeo from "../data/provinces.geojson";
 import regionsGeo from "../data/regions.geojson";
@@ -32,5 +32,20 @@ describe("city set", () => {
     expect(loadLocate(storage)).toBe(false);
     saveLocate(true, storage);
     expect(loadLocate(storage)).toBe(true);
+  });
+
+  it("shows the streak, review count, and reset button until they are turned off", () => {
+    const storage = {
+      items: {},
+      getItem(key) {
+        return Object.prototype.hasOwnProperty.call(this.items, key) ? this.items[key] : null;
+      },
+      setItem(key, value) {
+        this.items[key] = value;
+      },
+    };
+    expect(loadScorePrefs(storage)).toEqual({ streak: true, review: true, reset: true });
+    saveScorePrefs({ streak: false, review: true, reset: false }, storage);
+    expect(loadScorePrefs(storage)).toEqual({ streak: false, review: true, reset: false });
   });
 });

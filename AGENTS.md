@@ -29,7 +29,7 @@ Lock the app tab before interacting, then unlock when finished. Prefer `browser_
 
 Text the player sees must not contain an em dash. That includes prompts, hints, feedback, study facts, and the document title. Write a sentence instead.
 
-Keep `question.prompt` as the full sentence. Tests match `/^Click /` and `/^Which region is /`. Highlight the place with `renderPrompt` and `<span class="prompt-target">`. Do not use `innerHTML`. In Type it, Daily before the reveal, and Study, highlight the kind word (`region`, `province`, or `city`), never the hidden answer.
+Keep `question.prompt` as the full sentence. Tests match `/^Click /` and `/^Which (region|province|city) is this\?/`. Highlight the place with `renderPrompt` and `<span class="prompt-target">`. Do not use `innerHTML`. In Type it, multiple choice, Daily before the reveal, and Study, highlight the kind word (`region`, `province`, or `city`), never the hidden answer.
 
 Gold for a highlighted name and for the map target is `--gold` (`#f0b429`). A correct feedback card is a dim green wash. A wrong card is a dim red wash. Do not bring back the thin inset edge.
 

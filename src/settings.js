@@ -1,6 +1,7 @@
 const CITY_SET_KEY = "saan-city-set-v1";
 const OUTLINES_KEY = "saan-outlines-v1";
 const LOCATE_KEY = "saan-locate-v1";
+const SCORE_KEY = "saan-score-v1";
 
 function storageOf(storage) {
   return storage === undefined ? globalThis.localStorage : storage;
@@ -73,6 +74,43 @@ export function loadLocate(storage) {
     return store.getItem(LOCATE_KEY) !== "false";
   } catch {
     return true;
+  }
+}
+
+/** Streak, review count, and the reset button all start visible. */
+export function loadScorePrefs(storage) {
+  const fallback = { streak: true, review: true, reset: true };
+  const store = storageOf(storage);
+  if (!store) return fallback;
+  try {
+    const raw = store.getItem(SCORE_KEY);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return fallback;
+    return {
+      streak: parsed.streak !== false,
+      review: parsed.review !== false,
+      reset: parsed.reset !== false,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+export function saveScorePrefs(prefs, storage) {
+  const store = storageOf(storage);
+  if (!store) return;
+  try {
+    store.setItem(
+      SCORE_KEY,
+      JSON.stringify({
+        streak: prefs.streak !== false,
+        review: prefs.review !== false,
+        reset: prefs.reset !== false,
+      })
+    );
+  } catch {
+    // Private mode and full storage should not break the quiz.
   }
 }
 
