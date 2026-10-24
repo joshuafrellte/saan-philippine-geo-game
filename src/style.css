@@ -445,6 +445,19 @@ h1 span { color: var(--gold); }
 
 .land.is-correct { fill: #8fd9ae; stroke: var(--correct); }
 
+.land.is-pulse { animation: shape-pulse 1.4s ease-in-out infinite; }
+
+.map-plate {
+  fill: #102830;
+  stroke: rgba(246, 241, 230, 0.45);
+  stroke-width: 1;
+}
+
+.map-leader {
+  stroke: #f6f1e6;
+  stroke-width: 1.5;
+}
+
 .land.is-wrong { fill: #f3b2a8; stroke: var(--wrong); }
 
 .land.is-revealed { stroke: #2a1c05; }
@@ -560,9 +573,15 @@ h1 span { color: var(--gold); }
   50% { opacity: 0.4; }
 }
 
+@keyframes shape-pulse {
+  0%, 100% { fill: #8fd9ae; }
+  50% { fill: #e7fff1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .target-ring,
-  .target-ring-dark { animation: none; }
+  .target-ring-dark,
+  .land.is-pulse { animation: none; }
 }
 
 .zoom-controls {

@@ -39,12 +39,21 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
     r: RING_RADIUS,
     "pointer-events": "none",
   });
+  const leader = element("line", {
+    class: "map-leader",
+    "pointer-events": "none",
+  });
+  const plate = element("rect", {
+    class: "map-plate",
+    rx: "7",
+    "pointer-events": "none",
+  });
   const label = element("text", {
     class: "map-label",
     "text-anchor": "middle",
     "pointer-events": "none",
   });
-  screen.append(ringDark, ringLight, label);
+  screen.append(ringDark, ringLight, leader, plate, label);
   svg.replaceChildren(viewport, screen);
 
   const selection = select(svg);
@@ -103,13 +112,41 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
     }
     const showLabel = Boolean(labelText && labelPoint);
     label.setAttribute("display", showLabel ? "inline" : "none");
-    if (showLabel) {
-      const x = transform.applyX(labelPoint[0]);
-      const y = transform.applyY(labelPoint[1]);
-      label.setAttribute("x", x);
-      label.setAttribute("y", y + RING_RADIUS + 16);
-      label.textContent = labelText;
+    plate.setAttribute("display", "none");
+    leader.setAttribute("display", "none");
+    if (!showLabel) return;
+    label.textContent = labelText;
+    const anchorX = transform.applyX(labelPoint[0]);
+    const anchorY = transform.applyY(labelPoint[1]);
+    const textWidth = label.getComputedTextLength();
+    const shapeWidth = targetScreenWidth();
+    const lead = shapeWidth > 0 && textWidth > shapeWidth + 8;
+    const x = lead ? anchorX + textWidth / 2 + 22 : anchorX;
+    const y = lead ? anchorY - 6 : anchorY + RING_RADIUS + 18;
+    label.setAttribute("x", x);
+    label.setAttribute("y", y);
+    if (lead) {
+      leader.setAttribute("display", "inline");
+      leader.setAttribute("x1", anchorX);
+      leader.setAttribute("y1", anchorY);
+      leader.setAttribute("x2", x - textWidth / 2 - 8);
+      leader.setAttribute("y2", y - 4);
     }
+    const box = label.getBBox();
+    if (box.width > 0) {
+      plate.setAttribute("display", "inline");
+      plate.setAttribute("x", box.x - 7);
+      plate.setAttribute("y", box.y - 4);
+      plate.setAttribute("width", box.width + 14);
+      plate.setAttribute("height", box.height + 8);
+    }
+  }
+
+  function targetScreenWidth() {
+    const feature = question?.place?.feature;
+    if (!feature) return 0;
+    const bounds = path.bounds(feature);
+    return Math.abs(transform.applyX(bounds[1][0]) - transform.applyX(bounds[0][0]));
   }
 
   const behavior = zoom()
@@ -164,7 +201,10 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
     if (study?.selectedId === id) classes.push("is-target");
     if (study || inert) return classes.join(" ");
     if (wrongId && wrongId === id) classes.push("is-wrong");
-    else if (locked && !question?.highlightId && question?.targetId === id) classes.push("is-correct");
+    else if (locked && !question?.highlightId && question?.targetId === id) {
+      classes.push("is-correct");
+      if (wrongId && !question.choices) classes.push("is-pulse");
+    }
     else if (question?.highlightId === id) {
       classes.push("is-target");
       if (locked && question.mode === "type") classes.push("is-revealed");
