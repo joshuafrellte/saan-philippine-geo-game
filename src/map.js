@@ -164,6 +164,7 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
       viewport.setAttribute("transform", event.transform);
       applyProvinceFade(event.transform.k);
       placeOverlay();
+      placeInsetDot();
       if (event.sourceEvent && question?.mode === "type") playerAdjusted = true;
     });
 
@@ -482,6 +483,45 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
     } else if (restoreFrame) {
       applyTransform(transformFor(frameFeature()));
     }
+    drawInset();
+  }
+
+  const locator = document.querySelector("#locator");
+  let insetProjection = null;
+  let insetDot = null;
+
+  function drawInset() {
+    if (!locator || !projection) return;
+    locator.replaceChildren();
+    const inset = element("svg", { viewBox: "0 0 72 96" });
+    insetProjection = geoMercator().fitExtent([[4, 4], [68, 92]], {
+      type: "FeatureCollection",
+      features: atlas.regions.map((region) => region.feature).filter(Boolean),
+    });
+    const insetPath = geoPath(insetProjection);
+    for (const region of atlas.regions) {
+      if (!region.feature) continue;
+      inset.append(element("path", { d: insetPath(region.feature) || "", class: "locator-land" }));
+    }
+    insetDot = element("circle", { class: "locator-dot", r: "3.5" });
+    inset.append(insetDot);
+    locator.append(inset);
+    placeInsetDot();
+  }
+
+  function placeInsetDot() {
+    if (!locator || !insetDot || !insetProjection) return;
+    const framed = question?.mode === "type" && !study && transform.k > 1.15;
+    locator.hidden = !framed;
+    if (!framed) return;
+    const center = geographicCenter();
+    const point = center ? insetProjection(center.geo) : null;
+    if (!point || !Number.isFinite(point[0]) || !Number.isFinite(point[1])) {
+      locator.hidden = true;
+      return;
+    }
+    insetDot.setAttribute("cx", point[0]);
+    insetDot.setAttribute("cy", point[1]);
   }
 
   function frameQuestion(duringAnswer = false) {
