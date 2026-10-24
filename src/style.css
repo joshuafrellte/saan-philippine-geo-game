@@ -486,7 +486,10 @@ h1 span { color: var(--gold); }
   pointer-events: none;
 }
 
-.city-outline { stroke: #8a5a10; }
+.city-outline {
+  stroke: #8a5a10;
+  stroke-opacity: var(--city-outline-alpha, 0);
+}
 
 .settings {
   width: min(440px, calc(100vw - 24px));

@@ -88,6 +88,8 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
   }
 
   function applyProvinceFade(k) {
+    const city = Math.min(1, Math.max(0, (k - 1) / 2));
+    svg.style.setProperty("--city-outline-alpha", city.toFixed(3));
     if (!QUIET_PROVINCE_BORDERS) {
       land.style.removeProperty("--province-alpha");
       land.style.removeProperty("--province-width");
