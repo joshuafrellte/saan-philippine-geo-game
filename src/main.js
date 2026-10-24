@@ -629,14 +629,40 @@ function boot(data) {
     }
 
     dock.replaceChildren();
+    dock.classList.toggle("is-click", question.mode !== "daily" && question.mode !== "type");
     if (question.mode === "daily") {
       dock.append(dailyBoard());
-    } else if (question.empty) {
+    } else {
+      const slot = document.createElement("div");
+      slot.className = "dock-slot";
+      const body = document.createElement("div");
+      body.className = "dock-body";
+      const foot = document.createElement("div");
+      foot.className = "dock-foot";
+      slot.append(body, foot);
+      dock.append(slot);
+      fillAnswer(question, body, foot);
+    }
+
+    map.show(question, {
+      wrongId: state.wrongId,
+      locked: state.answered,
+      cities: view().cities,
+      outlines: state.outlines,
+      locate: state.locate !== false,
+    });
+    syncDailyClock();
+  }
+
+  function fillAnswer(question, body, foot) {
+    if (question.empty) {
       const note = document.createElement("p");
       note.className = "hint";
       note.textContent = "Every city is turned off. Open the city list and check at least one.";
-      dock.append(note);
-    } else if (!state.answered && question.choices) {
+      body.append(note);
+      return;
+    }
+    if (!state.answered && question.choices) {
       const choices = document.createElement("div");
       choices.className = "choices";
       for (const choice of question.choices) {
@@ -647,8 +673,11 @@ function boot(data) {
         button.addEventListener("click", () => settle(choice.id, null, choice.label));
         choices.append(button);
       }
-      dock.append(choices, assistRow());
-    } else if (!state.answered && question.mode === "type") {
+      body.append(choices);
+      foot.append(assistRow());
+      return;
+    }
+    if (!state.answered && question.mode === "type") {
       const form = document.createElement("form");
       form.className = "type-form";
       const input = document.createElement("input");
@@ -690,31 +719,26 @@ function boot(data) {
         }
         settle(guess, null, "");
       });
-      dock.append(form, assistRow(true));
-    } else if (!state.answered) {
-      dock.append(assistRow());
-    } else {
-      const lead = state.correct ? "Correct. " : "Not quite. ";
-      const named = state.pickedName ? `That's ${state.pickedName}. ` : "";
-      const feedback = renderFeedback(state.correct, `${lead}${named}${describePlace(question.place)}`);
-      const next = document.createElement("button");
-      next.type = "button";
-      next.className = "next";
-      next.textContent = "Next";
-      next.addEventListener("click", ask);
-      dock.append(feedback);
-      if (state.session.answered > 0 && state.session.answered % 10 === 0) dock.append(sessionSummary());
-      dock.append(next);
+      body.append(form);
+      const chips = hintChips(question.place);
+      if (chips) body.append(chips);
+      foot.append(assistRow(true));
+      return;
     }
-
-    map.show(question, {
-      wrongId: state.wrongId,
-      locked: state.answered,
-      cities: view().cities,
-      outlines: state.outlines,
-      locate: state.locate !== false,
-    });
-    syncDailyClock();
+    if (!state.answered) {
+      foot.append(assistRow());
+      return;
+    }
+    const lead = state.correct ? "Correct. " : "Not quite. ";
+    const named = state.pickedName ? `That's ${state.pickedName}. ` : "";
+    body.append(renderFeedback(state.correct, `${lead}${named}${describePlace(question.place)}`));
+    if (state.session.answered > 0 && state.session.answered % 10 === 0) body.append(sessionSummary());
+    const next = document.createElement("button");
+    next.type = "button";
+    next.className = "next";
+    next.textContent = "Next";
+    next.addEventListener("click", ask);
+    foot.append(next);
   }
 
   function assistRow(withHint = false) {
@@ -743,6 +767,20 @@ function boot(data) {
       }
     }
     row.append(giveUpButton());
+    return row;
+  }
+
+  function hintChips(place) {
+    const steps = hintSteps(place).slice(0, state.hintStep);
+    if (!steps.length) return null;
+    const row = document.createElement("div");
+    row.className = "hint-chips";
+    for (const step of steps) {
+      const chip = document.createElement("p");
+      chip.className = "hint-chip";
+      chip.textContent = step;
+      row.append(chip);
+    }
     return row;
   }
 
@@ -1181,7 +1219,6 @@ function hintFor(question, state) {
   if (question.mode === "city") return "Drag to move the map. Pinch or use + to reach a small city.";
   if (question.mode === "type") {
     const parts = [];
-    if (state.hintStep > 0) parts.push(...hintSteps(question.place).slice(0, state.hintStep));
     if (question.review) parts.push("You've missed this before, so it will keep coming back.");
     parts.push("Close spellings count, and so do older names.");
     return parts.join(" ");
