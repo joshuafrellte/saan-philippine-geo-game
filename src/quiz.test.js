@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildAtlas } from "./atlas.js";
-import { catalogFor, checkAnswer, createQuestion, describePlace, hintSteps, regionWeights, settleScore } from "./quiz.js";
+import { catalogFor, checkAnswer, createQuestion, describePlace, displayName, hintSteps, regionWeights, settleScore } from "./quiz.js";
 import places from "../data/places.json";
 import provincesGeo from "../data/provinces.geojson";
 import regionsGeo from "../data/regions.geojson";
@@ -92,6 +92,25 @@ describe("questions", () => {
     const missed = settleScore(session, misses, "province:ilocos-norte", false, true);
     expect(missed.session.streak).toBe(0);
     expect(missed.misses["province:ilocos-norte"]).toBe(3);
+  });
+
+  it("shows the three regional acronyms in title case and still accepts the official spelling", () => {
+    const calabarzon = atlas.regions.find((place) => place.id === "calabarzon");
+    expect(displayName(calabarzon)).toBe("Calabarzon");
+    expect(describePlace(calabarzon)).toContain("Calabarzon");
+    expect(describePlace(calabarzon)).not.toContain("CALABARZON");
+    const question = {
+      mode: "type",
+      key: "region:calabarzon",
+      answerId: calabarzon.id,
+      place: calabarzon,
+    };
+    expect(checkAnswer(question, "CALABARZON", catalogFor(atlas, question))).toBe(true);
+    expect(checkAnswer(question, "Calabarzon", catalogFor(atlas, question))).toBe(true);
+    const mimaropa = atlas.regions.find((place) => place.id === "mimaropa");
+    const soccsksargen = atlas.regions.find((place) => place.id === "region-12");
+    expect(displayName(mimaropa)).toBe("Mimaropa");
+    expect(displayName(soccsksargen)).toBe("Soccsksargen");
   });
 
   it("rolls miss weight up to the region", () => {

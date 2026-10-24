@@ -27,26 +27,42 @@ function shuffle(list, random) {
   return copy;
 }
 
+const DISPLAY_NAMES = {
+  calabarzon: "Calabarzon",
+  mimaropa: "Mimaropa",
+  "region-12": "Soccsksargen",
+};
+
+/** Title case for the three regional acronyms. The stored name stays official. */
+export function displayName(place) {
+  if (!place) return "";
+  return DISPLAY_NAMES[place.id] || place.label || place.name || "";
+}
+
 function regionPhrase(name) {
   const needsThe = /(Region|Peninsula|Valley|Visayas)$/.test(name) || /^(National|Cordillera|Ilocos)/.test(name);
   return needsThe ? `the ${name}` : name;
 }
 
+function shown(place) {
+  return displayName(place);
+}
+
 export function describePlace(place) {
   const alias = place.aliases?.length ? ` Also called ${place.aliases.join(", ")}.` : "";
-  const regionName = place.regionRecord?.name || "an unknown region";
+  const regionName = place.regionRecord ? shown(place.regionRecord) : "an unknown region";
   if (place.kind === "region") {
-    return `${place.name} has its regional center in ${place.capital}.${alias}`;
+    return `${shown(place)} has its regional center in ${place.capital}.${alias}`;
   }
   if (place.kind === "city") {
     const host = !place.provinceRecord
       ? ""
       : place.independent
-        ? ` It governs itself, separate from ${place.provinceRecord.name}.`
-        : ` It is in ${place.provinceRecord.name}.`;
-    return `${place.label || place.name} is in ${regionPhrase(regionName)}.${host}${alias}`;
+        ? ` It governs itself, separate from ${shown(place.provinceRecord)}.`
+        : ` It is in ${shown(place.provinceRecord)}.`;
+    return `${shown(place)} is in ${regionPhrase(regionName)}.${host}${alias}`;
   }
-  return `${place.name} has its capital in ${place.capital}, in ${regionPhrase(regionName)}.${alias}`;
+  return `${shown(place)} has its capital in ${place.capital}, in ${regionPhrase(regionName)}.${alias}`;
 }
 
 function choicesFor(regions, correctId, random) {
@@ -59,7 +75,7 @@ function choicesFor(regions, correctId, random) {
     picked.push(pool.splice(index, 1)[0]);
   }
   return shuffle(
-    [correct, ...picked].filter(Boolean).map((region) => ({ id: region.id, label: region.name })),
+    [correct, ...picked].filter(Boolean).map((region) => ({ id: region.id, label: shown(region) })),
     random
   );
 }
@@ -67,7 +83,7 @@ function choicesFor(regions, correctId, random) {
 export function createQuestion(atlas, mode, misses = {}, random = Math.random, previousKey = null) {
   if (mode === "region") {
     const region = pickAvoiding(atlas.regions, (item) => `region:${item.id}`, misses, random, previousKey);
-    const phrase = regionPhrase(region.name);
+    const phrase = regionPhrase(shown(region));
     return {
       mode,
       key: `region:${region.id}`,
@@ -93,8 +109,8 @@ export function createQuestion(atlas, mode, misses = {}, random = Math.random, p
     return {
       mode,
       key: `province:${province.id}`,
-      prompt: `Click ${province.name}`,
-      promptMark: province.name,
+      prompt: `Click ${shown(province)}`,
+      promptMark: shown(province),
       map: "province",
       highlightId: null,
       targetId: province.id,
@@ -115,8 +131,8 @@ export function createQuestion(atlas, mode, misses = {}, random = Math.random, p
     return {
       mode,
       key: `province:${province.id}`,
-      prompt: `Which region is ${province.name} in?`,
-      promptMark: province.name,
+      prompt: `Which region is ${shown(province)} in?`,
+      promptMark: shown(province),
       map: "province",
       highlightId: province.id,
       targetId: province.id,
@@ -143,7 +159,7 @@ export function createQuestion(atlas, mode, misses = {}, random = Math.random, p
     }
     const city = pickAvoiding(atlas.cities, (item) => `city:${item.id}`, misses, random, previousKey);
     const askRegion = random() >= 0.5;
-    const label = city.label || city.name;
+    const label = shown(city);
     return {
       mode,
       key: `city:${city.id}`,
@@ -190,7 +206,7 @@ function letterCount(name) {
 /** Two steps before the reveal. Region questions never give the region name away. */
 export function hintSteps(place) {
   if (!place?.name) return [];
-  const name = place.name;
+  const name = shown(place);
   const letter = firstLetter(name);
   const count = letterCount(name);
   const spelling = letter
@@ -203,7 +219,7 @@ export function hintSteps(place) {
       spelling,
     ];
   }
-  const regionName = place.regionRecord?.name;
+  const regionName = place.regionRecord ? shown(place.regionRecord) : "";
   const where = regionName ? `It is in ${regionPhrase(regionName)}.` : "It sits in one of the regions.";
   return [where, spelling];
 }
@@ -233,7 +249,7 @@ export function regionWeights(atlas, misses) {
   const totals = new Map();
   function add(region, weight) {
     if (!region || !(weight > 0)) return;
-    const current = totals.get(region.id) || { id: region.id, name: region.name, weight: 0 };
+    const current = totals.get(region.id) || { id: region.id, name: displayName(region), weight: 0 };
     current.weight += weight;
     totals.set(region.id, current);
   }

@@ -2,6 +2,7 @@ import { geoMercator, geoPath } from "d3-geo";
 import { select } from "d3-selection";
 import { zoom, zoomIdentity } from "d3-zoom";
 import { fitTransform, frameSpec } from "./frame.js";
+import { displayName } from "./quiz.js";
 import { regionOutline } from "./outline.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -31,12 +32,12 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
   const screen = element("g", { class: "screen-layer" });
   const ringDark = element("circle", {
     class: "target-ring target-ring-dark",
-    r: RING_RADIUS,
+    r: RING_RADIUS + 5,
     "pointer-events": "none",
   });
   const ringLight = element("circle", {
     class: "target-ring",
-    r: RING_RADIUS,
+    r: RING_RADIUS - 2,
     "pointer-events": "none",
   });
   const leader = element("line", {
@@ -316,7 +317,7 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
   function draw() {
     ringPoint = null;
     labelPoint = null;
-    labelText = !study && locked && question?.place ? question.place.label || question.place.name || "" : "";
+    labelText = !study && locked && question?.place ? displayName(question.place) : "";
     land.replaceChildren();
     if (!path) {
       placeOverlay();

@@ -1,6 +1,6 @@
 import { buildAtlas, validateAtlas } from "./atlas.js";
 import { loadMisses, saveMisses } from "./memory.js";
-import { MODES, catalogFor, checkAnswer, createQuestion, describePlace, hintSteps, regionWeights, settleScore } from "./quiz.js";
+import { MODES, catalogFor, checkAnswer, createQuestion, describePlace, displayName, hintSteps, regionWeights, settleScore } from "./quiz.js";
 import { mountMap } from "./map.js";
 import { DAILY_TRIES, applyGuess, boardForToday, countdownPhrase, dailyProvince, formatCountdown, formatEditionDate, loadDaily, manilaDate, msUntilNextDaily, placeBearing, resolveGuess, resultMarks, saveDaily, shareText } from "./daily.js";
 import { suggestPlaces } from "./suggest.js";
@@ -560,7 +560,7 @@ function boot(data) {
     eyebrow.className = "eyebrow";
     eyebrow.textContent = card.eyebrow;
     const title = document.createElement("h2");
-    title.textContent = card.name;
+    title.textContent = displayName(place);
     titles.append(eyebrow, title);
     const close = document.createElement("button");
     close.type = "button";
@@ -588,7 +588,7 @@ function boot(data) {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "place-link";
-      button.textContent = link.place.name;
+      button.textContent = displayName(link.place);
       button.addEventListener("click", () => openPlace(link.place));
       detail.append(button);
       wrap.append(term, detail);
@@ -1001,7 +1001,7 @@ function boot(data) {
         }
         commitCities(next.size === data.cities.length ? null : [...next]);
       });
-      regionRow.append(regionInput, document.createTextNode(region.name));
+      regionRow.append(regionInput, document.createTextNode(displayName(region)));
       const cityRows = document.createElement("div");
       cityRows.className = "region-cities";
       for (const city of cities) {

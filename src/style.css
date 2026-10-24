@@ -561,7 +561,7 @@ h1 span { color: var(--gold); }
 
 .target-ring-dark {
   stroke: #2a1c05;
-  stroke-width: 6;
+  stroke-width: 3;
 }
 
 .map-label {
@@ -597,7 +597,11 @@ h1 span { color: var(--gold); }
   bottom: 10px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 16px;
+  background: rgba(7, 22, 28, 0.88);
+  box-shadow: 0 0 0 1px rgba(246, 241, 230, 0.12);
 }
 
 .zoom-controls button {
@@ -605,7 +609,7 @@ h1 span { color: var(--gold); }
   height: 44px;
   border: 0;
   border-radius: 12px;
-  background: rgba(7, 22, 28, 0.82);
+  background: transparent;
   color: var(--ink);
   font-size: 1.3rem;
   line-height: 1;
