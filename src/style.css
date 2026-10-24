@@ -238,6 +238,28 @@ h1 span { color: var(--gold); }
   gap: 2px;
 }
 
+.session-dots {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.session-dots .daily-square {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+
+.stat-review { min-height: 44px; }
+
+.answer-fact {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
 .score-caption,
 .stat-note {
   color: var(--ink-dim);

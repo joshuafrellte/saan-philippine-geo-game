@@ -1,6 +1,6 @@
 import { buildAtlas, validateAtlas } from "./atlas.js";
 import { loadMisses, saveMisses } from "./memory.js";
-import { MODES, catalogFor, checkAnswer, createQuestion, describePlace, displayName, hintSteps, regionWeights, settleScore } from "./quiz.js";
+import { MODES, catalogFor, checkAnswer, createQuestion, describePlace, displayName, hintSteps, questionForMisses, regionWeights, settleScore } from "./quiz.js";
 import { mountMap } from "./map.js";
 import { DAILY_TRIES, applyGuess, boardForToday, countdownPhrase, dailyProvince, formatCountdown, formatEditionDate, loadDaily, manilaDate, msUntilNextDaily, placeBearing, resolveGuess, resultMarks, saveDaily, shareText } from "./daily.js";
 import { suggestPlaces } from "./suggest.js";
@@ -35,7 +35,8 @@ function boot(data) {
     correct: false,
     wrongId: null,
     pickedName: "",
-    session: { correct: 0, answered: 0, streak: 0 },
+    session: { correct: 0, answered: 0, streak: 0, recent: [] },
+    reviewing: false,
     previousKey: null,
     cityIds: loadCitySet(),
     outlines: loadOutlines(),
@@ -120,6 +121,7 @@ function boot(data) {
     button.dataset.mode = mode.id;
     button.textContent = mode.label;
     button.addEventListener("click", () => {
+      state.reviewing = false;
       if (state.studying) {
         leaveStudy();
         state.mode = mode.id;
@@ -269,8 +271,15 @@ function boot(data) {
       startDaily();
       return;
     }
-    const question = createQuestion(view(), state.mode, state.misses, Math.random, state.previousKey);
-    question.review = (state.misses[question.key] || 0) > 0;
+    let question = null;
+    if (state.reviewing) {
+      question = questionForMisses(view(), state.misses, Math.random, state.previousKey);
+      if (!question) state.reviewing = false;
+    }
+    if (!question) {
+      question = createQuestion(view(), state.mode, state.misses, Math.random, state.previousKey);
+      question.review = (state.misses[question.key] || 0) > 0;
+    }
     state.question = question;
     state.previousKey = question.key;
     state.answered = false;
@@ -469,7 +478,10 @@ function boot(data) {
     state.correct = correct;
     state.wrongId = correct ? null : wrongId;
     state.pickedName = correct ? "" : pickedName;
-    state.session = scored.session;
+    state.session = {
+      ...scored.session,
+      recent: [...(state.session.recent || []), { correct }].slice(-10),
+    };
     if (scored.misses !== state.misses) {
       state.misses = scored.misses;
       saveMisses(state.misses);
@@ -732,6 +744,13 @@ function boot(data) {
     const lead = state.correct ? "Correct. " : "Not quite. ";
     const named = state.pickedName ? `That's ${state.pickedName}. ` : "";
     body.append(renderFeedback(state.correct, `${lead}${named}${describePlace(question.place)}`));
+    const fact = studyCard(data, studyLibrary, question.place).facts[0];
+    if (fact) {
+      const line = document.createElement("p");
+      line.className = "answer-fact";
+      line.textContent = fact;
+      body.append(line);
+    }
     if (state.session.answered > 0 && state.session.answered % 10 === 0) body.append(sessionSummary());
     const next = document.createElement("button");
     next.type = "button";
@@ -896,13 +915,41 @@ function boot(data) {
     }
 
     const saved = Object.keys(state.misses).length;
-    const review = document.createElement("span");
-    review.className = saved ? "stat" : "stat is-empty";
-    review.textContent = saved === 0
-      ? "0 to review"
-      : `${saved} ${saved === 1 ? "place" : "places"} to review`;
-    quiet.append(review);
+    if (saved > 0) {
+      const review = document.createElement("button");
+      review.type = "button";
+      review.className = "text-button stat-review";
+      review.textContent = `${saved} ${saved === 1 ? "place" : "places"} to review`;
+      review.addEventListener("click", startReview);
+      quiet.append(review);
+    } else {
+      const review = document.createElement("span");
+      review.className = "stat is-empty";
+      review.textContent = "0 to review";
+      quiet.append(review);
+    }
+    const recent = state.mode === "daily" ? [] : (state.session.recent || []).slice(-10);
+    if (recent.length) {
+      const dots = document.createElement("div");
+      dots.className = "session-dots";
+      dots.setAttribute("aria-hidden", "true");
+      for (const item of recent) {
+        const mark = document.createElement("span");
+        mark.className = item.correct ? "daily-square is-hit" : "daily-square is-miss";
+        dots.append(mark);
+      }
+      main.append(dots);
+    }
     score.append(main, quiet);
+  }
+
+  function startReview() {
+    if (!Object.keys(state.misses).length) return;
+    if (state.studying) leaveStudy();
+    state.reviewing = true;
+    state.mode = "type";
+    map.resetZoom();
+    ask();
   }
 
   function dataSection() {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildAtlas } from "./atlas.js";
-import { catalogFor, checkAnswer, createQuestion, describePlace, displayName, hintSteps, regionWeights, settleScore } from "./quiz.js";
+import { catalogFor, checkAnswer, createQuestion, describePlace, displayName, hintSteps, questionForMisses, regionWeights, settleScore } from "./quiz.js";
 import places from "../data/places.json";
 import provincesGeo from "../data/provinces.geojson";
 import regionsGeo from "../data/regions.geojson";
@@ -111,6 +111,24 @@ describe("questions", () => {
     const soccsksargen = atlas.regions.find((place) => place.id === "region-12");
     expect(displayName(mimaropa)).toBe("Mimaropa");
     expect(displayName(soccsksargen)).toBe("Soccsksargen");
+  });
+
+  it("asks only missed places in a review draw, and a correct answer lightens that miss", () => {
+    const misses = { "province:ilocos-norte": 2, "region:car": 1 };
+    const seen = new Set();
+    for (let i = 0; i < 12; i += 1) {
+      const question = questionForMisses(atlas, misses, Math.random, i % 2 ? "province:ilocos-norte" : null);
+      expect(question.mode).toBe("type");
+      expect(["ilocos-norte", "car"]).toContain(question.place.id);
+      seen.add(question.place.id);
+    }
+    expect(seen.size).toBeGreaterThan(0);
+    expect(questionForMisses(atlas, {})).toBeNull();
+    const question = questionForMisses(atlas, misses, () => 0);
+    const before = misses[question.key];
+    const scored = settleScore({ correct: 0, answered: 0, streak: 0 }, misses, question.key, true, false);
+    if (before === 1) expect(scored.misses[question.key]).toBeUndefined();
+    else expect(scored.misses[question.key]).toBe(before - 1);
   });
 
   it("rolls miss weight up to the region", () => {

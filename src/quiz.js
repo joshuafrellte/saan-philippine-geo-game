@@ -194,6 +194,37 @@ export function createQuestion(atlas, mode, misses = {}, random = Math.random, p
   };
 }
 
+/** One Type it question drawn from places the player has missed. */
+export function questionForMisses(atlas, misses, random = Math.random, previousKey = null) {
+  const places = [];
+  for (const key of Object.keys(misses || {})) {
+    if (!(misses[key] > 0)) continue;
+    const split = key.indexOf(":");
+    if (split < 0) continue;
+    const kind = key.slice(0, split);
+    const id = key.slice(split + 1);
+    const pool = kind === "region" ? atlas.regions : kind === "province" ? atlas.provinces : kind === "city" ? atlas.cities : null;
+    const place = pool?.find((item) => item.id === id);
+    if (place) places.push(place);
+  }
+  if (!places.length) return null;
+  const place = pickAvoiding(places, (item) => `${item.kind}:${item.id}`, misses, random, previousKey);
+  const kind = place.kind;
+  return {
+    mode: "type",
+    key: `${kind}:${place.id}`,
+    prompt: `Type the name of this ${kind}`,
+    promptMark: kind,
+    map: kind,
+    highlightId: place.id,
+    targetId: place.id,
+    answerId: place.id,
+    place,
+    choices: null,
+    review: true,
+  };
+}
+
 function firstLetter(name) {
   const found = [...(name || "")].find((char) => /\p{L}/u.test(char));
   return found ? found.toUpperCase() : "";
