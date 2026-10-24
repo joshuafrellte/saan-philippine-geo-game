@@ -30,4 +30,25 @@ describe("study library", () => {
     const card = studyCard(atlas, study, nir);
     expect(card.rows[0].text).toMatch(/settled/i);
   });
+
+  it("does not repeat the capital, seat, or city status already shown on the card", () => {
+    const hits = [];
+    for (const province of atlas.provinces) {
+      for (const fact of study[province.id].facts) {
+        if (/\bcapital\b/i.test(fact)) hits.push(`${province.id}: ${fact}`);
+      }
+    }
+    for (const region of atlas.regions) {
+      for (const fact of study[region.id].facts) {
+        if (/regional center|seat of the Bangsamoro/i.test(fact)) hits.push(`${region.id}: ${fact}`);
+      }
+    }
+    for (const city of atlas.cities) {
+      if (!city.independent) continue;
+      for (const fact of study[city.id].facts) {
+        if (/governs itself/i.test(fact)) hits.push(`${city.id}: ${fact}`);
+      }
+    }
+    expect(hits).toEqual([]);
+  });
 });

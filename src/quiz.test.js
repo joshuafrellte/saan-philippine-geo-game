@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildAtlas } from "./atlas.js";
-import { catalogFor, checkAnswer, createQuestion, describePlace } from "./quiz.js";
+import { catalogFor, checkAnswer, createQuestion, describePlace, hintSteps, regionWeights, settleScore } from "./quiz.js";
 import places from "../data/places.json";
 import provincesGeo from "../data/provinces.geojson";
 import regionsGeo from "../data/regions.geojson";
@@ -61,5 +61,46 @@ describe("questions", () => {
     const cebu = atlas.cities.find((city) => city.id === "cebu-city");
     expect(describePlace(cebu)).toContain("Central Visayas");
     expect(describePlace(cebu)).toContain("separate from Cebu");
+  });
+
+  it("hints around a place without giving a region question its name", () => {
+    const ilocos = atlas.provinces.find((place) => place.id === "ilocos-norte");
+    const provinceSteps = hintSteps(ilocos);
+    expect(provinceSteps[0]).toContain("Ilocos Region");
+    expect(provinceSteps[1]).toContain("starts with I");
+    expect(provinceSteps[1]).toContain("11 letters");
+
+    const region = atlas.regions.find((place) => place.id === "region-1");
+    const regionSteps = hintSteps(region);
+    expect(regionSteps[0]).not.toContain(region.name);
+    expect(regionSteps[0]).toContain("starts with S");
+    expect(regionSteps[1]).not.toContain(region.name);
+    expect(regionSteps[1]).toContain("12 letters");
+  });
+
+  it("leaves a miss in place when the correct answer used a hint", () => {
+    const session = { correct: 1, answered: 2, streak: 2 };
+    const misses = { "province:ilocos-norte": 2 };
+    const assisted = settleScore(session, misses, "province:ilocos-norte", true, true);
+    expect(assisted.session).toEqual({ correct: 2, answered: 3, streak: 2 });
+    expect(assisted.misses).toBe(misses);
+
+    const clean = settleScore(session, misses, "province:ilocos-norte", true, false);
+    expect(clean.session.streak).toBe(3);
+    expect(clean.misses).toEqual({ "province:ilocos-norte": 1 });
+
+    const missed = settleScore(session, misses, "province:ilocos-norte", false, true);
+    expect(missed.session.streak).toBe(0);
+    expect(missed.misses["province:ilocos-norte"]).toBe(3);
+  });
+
+  it("rolls miss weight up to the region", () => {
+    const weights = regionWeights(atlas, {
+      "province:ilocos-norte": 2,
+      "province:ilocos-sur": 1,
+      "region:region-7": 4,
+    });
+    expect(weights[0]).toMatchObject({ id: "region-7", weight: 4 });
+    expect(weights[1]).toMatchObject({ id: "region-1", name: "Ilocos Region", weight: 3 });
   });
 });

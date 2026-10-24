@@ -1,10 +1,10 @@
 import { buildAtlas, validateAtlas } from "./atlas.js";
-import { loadMisses, recordAnswer, saveMisses } from "./memory.js";
-import { MODES, catalogFor, checkAnswer, createQuestion, describePlace } from "./quiz.js";
+import { loadMisses, saveMisses } from "./memory.js";
+import { MODES, catalogFor, checkAnswer, createQuestion, describePlace, hintSteps, regionWeights, settleScore } from "./quiz.js";
 import { mountMap } from "./map.js";
-import { DAILY_TRIES, applyGuess, boardForToday, dailyProvince, loadDaily, placeBearing, resolveGuess, saveDaily, shareText } from "./daily.js";
+import { DAILY_TRIES, applyGuess, boardForToday, countdownPhrase, dailyProvince, formatCountdown, formatEditionDate, loadDaily, manilaDate, msUntilNextDaily, placeBearing, resolveGuess, resultMarks, saveDaily, shareText } from "./daily.js";
 import { suggestPlaces } from "./suggest.js";
-import { loadCitySet, loadOutlines, majorCityIds, resolveCities, saveCitySet, saveOutlines } from "./settings.js";
+import { loadCitySet, loadLocate, loadOutlines, majorCityIds, resolveCities, saveCitySet, saveLocate, saveOutlines } from "./settings.js";
 import { studyCard } from "./study.js";
 import places from "../data/places.json";
 import studyLibrary from "../data/study.json";
@@ -39,6 +39,9 @@ function boot(data) {
     previousKey: null,
     cityIds: loadCitySet(),
     outlines: loadOutlines(),
+    locate: loadLocate(),
+    hintStep: 0,
+    assisted: false,
     daily: null,
     dailyNote: "",
     studying: false,
@@ -111,7 +114,7 @@ function boot(data) {
     return `${active} of ${data.cities.length}`;
   }
 
-  for (const mode of MODES) {
+  function modeButton(mode) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "mode";
@@ -130,18 +133,43 @@ function boot(data) {
       map.resetZoom();
       ask();
     });
-    modes.append(button);
+    return button;
   }
+
+  function modeGroup(label, list) {
+    const group = document.createElement("div");
+    group.className = "mode-group";
+    group.setAttribute("role", "group");
+    group.setAttribute("aria-label", label);
+    const title = document.createElement("span");
+    title.className = "mode-group-label";
+    title.textContent = label;
+    group.append(title);
+    for (const mode of list) group.append(modeButton(mode));
+    return group;
+  }
+
+  modes.append(
+    modeGroup("Play", MODES.filter((mode) => mode.id === "daily")),
+    modeGroup("Quiz", MODES.filter((mode) => mode.id !== "daily"))
+  );
 
   const settingsButton = document.createElement("button");
   settingsButton.type = "button";
   settingsButton.className = "settings-open";
+  const settingsName = document.createElement("span");
+  settingsName.className = "settings-name";
   const cityCount = document.createElement("span");
-  settingsButton.append(filterIcon(), cityCount);
+  cityCount.className = "settings-count";
+  const settingsCopy = document.createElement("span");
+  settingsCopy.className = "settings-copy";
+  settingsCopy.append(settingsName, cityCount);
+  settingsButton.append(filterIcon(), settingsCopy);
   settingsButton.addEventListener("click", openSettings);
   modes.append(settingsButton);
 
   function setCityCount() {
+    settingsName.textContent = "Map settings";
     cityCount.textContent = cityCountLabel();
   }
 
@@ -171,7 +199,59 @@ function boot(data) {
   document.querySelector('[data-zoom="out"]').addEventListener("click", () => map.zoomBy(1 / 1.6));
   document.querySelector('[data-zoom="reset"]').addEventListener("click", () => map.resetZoom());
 
+  let dailyClock = 0;
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") tickDailyClock();
+  });
+
   ask();
+
+  function focusField() {
+    const field = dock.querySelector("input");
+    if (!field) return;
+    field.focus();
+    field.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }
+
+  function dailyClockActive() {
+    return state.mode === "daily" && state.daily?.done && !state.studying;
+  }
+
+  function stopDailyClock() {
+    if (!dailyClock) return;
+    window.clearInterval(dailyClock);
+    dailyClock = 0;
+  }
+
+  function syncDailyClock() {
+    if (!dailyClockActive()) {
+      stopDailyClock();
+      return;
+    }
+    tickDailyClock();
+    if (!dailyClock && dailyClockActive()) dailyClock = window.setInterval(tickDailyClock, 1000);
+  }
+
+  function tickDailyClock() {
+    if (!dailyClockActive()) {
+      stopDailyClock();
+      return;
+    }
+    if (state.daily.date !== manilaDate()) {
+      stopDailyClock();
+      startDaily();
+      return;
+    }
+    const remaining = msUntilNextDaily();
+    const time = dock.querySelector("[data-daily-clock]");
+    const spoken = dock.querySelector("[data-daily-spoken]");
+    if (time) time.textContent = formatCountdown(remaining);
+    if (spoken) {
+      const phrase = countdownPhrase(remaining);
+      if (spoken.textContent !== phrase) spoken.textContent = phrase;
+    }
+  }
 
   function ask() {
     if (state.mode === "daily") {
@@ -186,9 +266,10 @@ function boot(data) {
     state.correct = false;
     state.wrongId = null;
     state.pickedName = "";
+    state.hintStep = 0;
+    state.assisted = false;
     paint();
-    const field = dock.querySelector("input");
-    if (field) field.focus();
+    focusField();
   }
 
   function startDaily() {
@@ -215,7 +296,7 @@ function boot(data) {
     state.wrongId = null;
     state.pickedName = "";
     paint();
-    dock.querySelector("input")?.focus();
+    focusField();
   }
 
   function submitDaily(raw, place = null) {
@@ -239,7 +320,7 @@ function boot(data) {
       saveDaily(state.daily);
     }
     paint();
-    dock.querySelector("input")?.focus();
+    focusField();
   }
 
   function dailyBoard() {
@@ -279,13 +360,16 @@ function boot(data) {
       input.spellcheck = false;
       input.enterKeyHint = "done";
       input.setAttribute("aria-label", "Province name");
+      input.addEventListener("focus", () => input.scrollIntoView({ block: "nearest", inline: "nearest" }));
       const suggest = mountSuggestions(input, data.provinces, state.daily.guesses, (place) => {
         submitDaily(place.name, place);
       });
       const submit = document.createElement("button");
       submit.type = "submit";
       submit.className = "next";
-      submit.textContent = "Guess";
+      const submitLabel = document.createElement("span");
+      submitLabel.textContent = "Guess";
+      submit.append(submitLabel, enterMark());
       form.append(suggest.wrap, submit);
       form.addEventListener("submit", (event) => {
         event.preventDefault();
@@ -310,44 +394,77 @@ function boot(data) {
       }
       return wrap;
     }
-    const feedback = document.createElement("p");
-    feedback.className = state.daily.won ? "feedback is-correct" : "feedback is-wrong";
-    feedback.setAttribute("role", "status");
     const lead = state.daily.won ? "Correct. " : "That's six. ";
-    feedback.textContent = `${lead}${describePlace(state.question.place)}`;
+    const feedback = renderFeedback(state.daily.won, `${lead}${describePlace(state.question.place)}`);
     const copy = document.createElement("button");
     copy.type = "button";
-    copy.className = "next";
-    copy.textContent = "Copy result";
+    copy.className = "next copy-result";
+    const copyLabel = document.createElement("span");
+    copyLabel.textContent = "Copy result";
+    copy.append(copyIcon(), copyLabel);
     copy.addEventListener("click", async () => {
       const text = shareText(state.daily, state.question.dailyNumber);
       try {
         await navigator.clipboard.writeText(text);
-        copy.textContent = "Copied";
+        copyLabel.textContent = "Copied";
       } catch {
-        copy.textContent = "Copy failed";
+        copyLabel.textContent = "Copy failed";
       }
     });
-    wrap.append(feedback, copy);
+    const squares = document.createElement("div");
+    squares.className = "daily-squares";
+    squares.setAttribute("role", "img");
+    const score = state.daily.won ? state.daily.guesses.length : 0;
+    squares.setAttribute("aria-label", `Today's result, ${score} of ${DAILY_TRIES}`);
+    for (const mark of resultMarks(state.daily)) {
+      const cell = document.createElement("span");
+      cell.className = mark === "empty" ? "daily-square" : `daily-square is-${mark}`;
+      squares.append(cell);
+    }
+    const next = document.createElement("div");
+    next.className = "daily-next";
+    const label = document.createElement("p");
+    label.className = "daily-next-kicker";
+    label.textContent = "Next province";
+    const time = document.createElement("p");
+    time.className = "daily-next-time";
+    time.dataset.dailyClock = "";
+    time.setAttribute("aria-hidden", "true");
+    time.textContent = formatCountdown(msUntilNextDaily());
+    const spoken = document.createElement("p");
+    spoken.className = "daily-next-spoken";
+    spoken.dataset.dailySpoken = "";
+    spoken.setAttribute("role", "status");
+    spoken.textContent = countdownPhrase(msUntilNextDaily());
+    const note = document.createElement("p");
+    note.className = "daily-next-kicker";
+    note.textContent = "Midnight in Manila";
+    next.append(label, time, spoken, note);
+    if (state.daily.streak > 0) {
+      const streak = document.createElement("p");
+      streak.className = "daily-next-streak";
+      streak.textContent = `${state.daily.streak}-day streak`;
+      next.append(streak);
+    }
+    wrap.append(feedback, squares, copy, next);
     return wrap;
   }
 
   function settle(response, wrongId, pickedName = "") {
     if (state.answered || !state.question?.place) return;
     const correct = checkAnswer(state.question, response, catalogFor(view(), state.question));
+    const scored = settleScore(state.session, state.misses, state.question.key, correct, state.assisted);
     state.answered = true;
     state.correct = correct;
     state.wrongId = correct ? null : wrongId;
     state.pickedName = correct ? "" : pickedName;
-    state.session.answered += 1;
-    if (correct) {
-      state.session.correct += 1;
-      state.session.streak += 1;
-    } else {
-      state.session.streak = 0;
+    state.session = scored.session;
+    if (scored.misses !== state.misses) {
+      state.misses = scored.misses;
+      saveMisses(state.misses);
     }
-    state.misses = recordAnswer(state.misses, state.question.key, correct);
-    saveMisses(state.misses);
+    state.hintStep = 0;
+    state.assisted = false;
     paint();
     dock.querySelector(".next")?.focus();
   }
@@ -510,6 +627,7 @@ function boot(data) {
   function paint() {
     if (state.studying) {
       paintStudy();
+      syncDailyClock();
       return;
     }
     const { question } = state;
@@ -521,6 +639,7 @@ function boot(data) {
       const active = button.dataset.mode === state.mode;
       button.classList.toggle("is-active", active);
       button.setAttribute("aria-pressed", active ? "true" : "false");
+      if (active) button.scrollIntoView({ inline: "nearest", block: "nearest" });
     }
 
     score.replaceChildren();
@@ -534,17 +653,22 @@ function boot(data) {
     const ratio = document.createElement("strong");
     ratio.textContent = `${state.session.correct}/${state.session.answered}`;
     const streak = document.createElement("span");
-    streak.textContent = `streak ${state.session.streak}`;
+    streak.textContent = `${state.session.streak} in a row`;
     score.append(ratio, streak);
-    const saved = Object.values(state.misses).reduce((sum, count) => sum + count, 0);
+    const saved = Object.keys(state.misses).length;
     if (saved > 0) {
       const review = document.createElement("span");
-      review.textContent = `${saved} to review`;
+      review.textContent = `${saved} ${saved === 1 ? "place" : "places"} to review`;
       const clear = document.createElement("button");
       clear.type = "button";
       clear.className = "text-button";
-      clear.textContent = "Clear";
+      clear.textContent = "Reset review list";
       clear.addEventListener("click", () => {
+        const placeWord = saved === 1 ? "place" : "places";
+        const ok = window.confirm(
+          `Reset the review list? This forgets ${saved} ${placeWord} you missed. The score stays.`
+        );
+        if (!ok) return;
         state.misses = {};
         saveMisses(state.misses);
         paint();
@@ -572,7 +696,7 @@ function boot(data) {
         button.addEventListener("click", () => settle(choice.id, null, choice.label));
         choices.append(button);
       }
-      dock.append(choices, giveUpButton());
+      dock.append(choices, assistRow());
     } else if (!state.answered && question.mode === "type") {
       const form = document.createElement("form");
       form.className = "type-form";
@@ -590,13 +714,16 @@ function boot(data) {
       input.spellcheck = false;
       input.enterKeyHint = "done";
       input.setAttribute("aria-label", question.prompt);
+      input.addEventListener("focus", () => input.scrollIntoView({ block: "nearest", inline: "nearest" }));
       const suggest = mountSuggestions(input, catalogFor(view(), question), [], (place) => {
         settle(place.id, null, place.label || place.name);
       });
       const submit = document.createElement("button");
       submit.type = "submit";
       submit.className = "next";
-      submit.textContent = "Check";
+      const submitLabel = document.createElement("span");
+      submitLabel.textContent = "Check";
+      submit.append(submitLabel, enterMark());
       form.append(suggest.wrap, submit);
       form.addEventListener("submit", (event) => {
         event.preventDefault();
@@ -612,36 +739,60 @@ function boot(data) {
         }
         settle(guess, null, "");
       });
-      dock.append(form, giveUpButton());
+      dock.append(form, assistRow(true));
     } else if (!state.answered) {
-      dock.append(giveUpButton());
+      dock.append(assistRow());
     } else {
-      const feedback = document.createElement("p");
-      feedback.className = state.correct ? "feedback is-correct" : "feedback is-wrong";
-      feedback.setAttribute("role", "status");
       const lead = state.correct ? "Correct. " : "Not quite. ";
       const named = state.pickedName ? `That's ${state.pickedName}. ` : "";
-      feedback.textContent = `${lead}${named}${describePlace(question.place)}`;
+      const feedback = renderFeedback(state.correct, `${lead}${named}${describePlace(question.place)}`);
       const next = document.createElement("button");
       next.type = "button";
       next.className = "next";
       next.textContent = "Next";
       next.addEventListener("click", ask);
-      dock.append(feedback, next);
+      dock.append(feedback);
+      if (state.session.answered > 0 && state.session.answered % 10 === 0) dock.append(sessionSummary());
+      dock.append(next);
     }
-
-    const credit = document.createElement("p");
-    credit.className = "credit";
-    credit.textContent =
-      "Land shapes from geoBoundaries (CC BY 3.0 IGO) and Faeldon / PSGC (MIT). Regions include the Negros Island Region, and Sulu in the Zamboanga Peninsula.";
-    dock.append(credit);
 
     map.show(question, {
       wrongId: state.wrongId,
       locked: state.answered,
       cities: view().cities,
       outlines: state.outlines,
+      locate: state.locate !== false,
     });
+    syncDailyClock();
+  }
+
+  function assistRow(withHint = false) {
+    const row = document.createElement("div");
+    row.className = "assist";
+    if (withHint) {
+      const steps = hintSteps(state.question?.place);
+      if (state.hintStep < steps.length) {
+        const hintButton = document.createElement("button");
+        hintButton.type = "button";
+        hintButton.className = "hint-button";
+        hintButton.textContent = state.hintStep === 0 ? "Hint" : "Another hint";
+        hintButton.addEventListener("click", () => {
+          const typed = dock.querySelector("input")?.value || "";
+          state.assisted = true;
+          state.hintStep += 1;
+          paint();
+          const field = dock.querySelector("input");
+          if (field) {
+            field.value = typed;
+            field.focus();
+            field.scrollIntoView({ block: "nearest", inline: "nearest" });
+          }
+        });
+        row.append(hintButton);
+      }
+    }
+    row.append(giveUpButton());
+    return row;
   }
 
   function giveUpButton() {
@@ -651,6 +802,21 @@ function boot(data) {
     button.textContent = "I don't know";
     button.addEventListener("click", () => settle("__give_up__", null, ""));
     return button;
+  }
+
+  function sessionSummary() {
+    const box = document.createElement("div");
+    box.className = "summary";
+    const accuracy = document.createElement("p");
+    accuracy.textContent = `${state.session.correct} of ${state.session.answered} answers were correct.`;
+    box.append(accuracy);
+    const weak = regionWeights(data, state.misses).slice(0, 3);
+    if (weak.length) {
+      const line = document.createElement("p");
+      line.textContent = `Most to review: ${weak.map((item) => item.name).join(", ")}.`;
+      box.append(line);
+    }
+    return box;
   }
 
   function commitCities(ids) {
@@ -697,9 +863,25 @@ function boot(data) {
       outlineNote,
       outlineToggle("Province borders", "provinces"),
       outlineToggle("City borders", "cities"),
+      locateToggle(),
       citySection()
     );
     if (!dialog.open) dialog.showModal();
+  }
+
+  function locateToggle() {
+    const row = document.createElement("label");
+    row.className = "check-row";
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.checked = state.locate !== false;
+    input.addEventListener("change", () => {
+      state.locate = input.checked;
+      saveLocate(state.locate);
+      paint();
+    });
+    row.append(input, document.createTextNode("Frame the area in Type it"));
+    return row;
   }
 
   function outlineToggle(label, key) {
@@ -883,6 +1065,63 @@ function mountSuggestions(input, catalog, exclude, onChoose) {
   };
 }
 
+function enterMark() {
+  const mark = document.createElement("span");
+  mark.className = "enter-hint";
+  mark.setAttribute("aria-hidden", "true");
+  mark.textContent = "Enter";
+  return mark;
+}
+
+function renderFeedback(correct, text) {
+  const feedback = document.createElement("p");
+  feedback.className = correct ? "feedback is-correct" : "feedback is-wrong";
+  feedback.setAttribute("role", "status");
+  const body = document.createElement("span");
+  body.textContent = text;
+  feedback.append(markIcon(correct), body);
+  return feedback;
+}
+
+function markIcon(correct) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 16 16");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("fill", "none");
+  svg.classList.add("feedback-icon");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("stroke", "currentColor");
+  path.setAttribute("stroke-width", "1.8");
+  path.setAttribute("stroke-linecap", "round");
+  path.setAttribute("stroke-linejoin", "round");
+  path.setAttribute("d", correct ? "M3.2 8.4 6.3 11.4 12.8 4.6" : "M4.2 4.2 11.8 11.8 M11.8 4.2 4.2 11.8");
+  svg.append(path);
+  return svg;
+}
+
+function copyIcon() {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 16 16");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("fill", "none");
+  const back = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  back.setAttribute("stroke", "currentColor");
+  back.setAttribute("stroke-width", "1.5");
+  back.setAttribute("stroke-linecap", "round");
+  back.setAttribute("stroke-linejoin", "round");
+  back.setAttribute("d", "M2.75 10.25V3.5A1.25 1.25 0 0 1 4 2.25h5.75A1.25 1.25 0 0 1 11 3.5");
+  const front = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  front.setAttribute("x", "4.75");
+  front.setAttribute("y", "4.75");
+  front.setAttribute("width", "9.25");
+  front.setAttribute("height", "9.25");
+  front.setAttribute("rx", "1.25");
+  front.setAttribute("stroke", "currentColor");
+  front.setAttribute("stroke-width", "1.5");
+  svg.append(back, front);
+  return svg;
+}
+
 function filterIcon() {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", "0 0 16 16");
@@ -911,16 +1150,24 @@ function renderPrompt(node, text, mark) {
 }
 
 function hintFor(question, state) {
+  if (question.mode === "daily" && state.daily) {
+    const edition = `Daily #${question.dailyNumber} · ${formatEditionDate(state.daily.date)}`;
+    if (state.answered) return edition;
+    const left = DAILY_TRIES - (state.daily.guesses.length || 0);
+    return `${edition} · ${left} ${left === 1 ? "try" : "tries"} left`;
+  }
   if (state.answered) return "";
   if (question.empty) return "Choose which cities to practice.";
-  if (question.review) return "You've missed this before, so it will keep coming back.";
+  if (question.review && question.mode !== "type") return "You've missed this before, so it will keep coming back.";
   if (question.mode === "city" && question.choices) return "The highlighted city stays gold until you answer.";
   if (question.mode === "city") return "Drag to move the map. Pinch or use + to reach a small city.";
-  if (question.mode === "daily") {
-    const left = DAILY_TRIES - (state.daily?.guesses.length || 0);
-    return `${left} ${left === 1 ? "try" : "tries"} left. A close spelling counts.`;
+  if (question.mode === "type") {
+    const parts = [];
+    if (state.hintStep > 0) parts.push(...hintSteps(question.place).slice(0, state.hintStep));
+    if (question.review) parts.push("You've missed this before, so it will keep coming back.");
+    parts.push("Close spellings count, and so do older names.");
+    return parts.join(" ");
   }
-  if (question.mode === "type") return "Close spellings count, and so do older names.";
   if (question.mode === "province") return "Drag to move the map. Pinch or use + to reach small islands.";
   if (question.mode === "which-region") return "The highlighted province stays gold until you answer.";
   return "Tap the matching shape. Drag if you need to move the map.";

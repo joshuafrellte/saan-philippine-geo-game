@@ -1,5 +1,5 @@
 import { matchesPlace } from "./fuzzy.js";
-import { pickWeighted } from "./memory.js";
+import { pickWeighted, recordAnswer } from "./memory.js";
 
 export const MODES = [
   { id: "daily", label: "Daily" },
@@ -176,6 +176,77 @@ export function createQuestion(atlas, mode, misses = {}, random = Math.random, p
     place,
     choices: null,
   };
+}
+
+function firstLetter(name) {
+  const found = [...(name || "")].find((char) => /\p{L}/u.test(char));
+  return found ? found.toUpperCase() : "";
+}
+
+function letterCount(name) {
+  return [...(name || "")].filter((char) => /\p{L}/u.test(char)).length;
+}
+
+/** Two steps before the reveal. Region questions never give the region name away. */
+export function hintSteps(place) {
+  if (!place?.name) return [];
+  const name = place.name;
+  const letter = firstLetter(name);
+  const count = letterCount(name);
+  const spelling = letter
+    ? `The name starts with ${letter} and has ${count} ${count === 1 ? "letter" : "letters"}.`
+    : `The name has ${count} ${count === 1 ? "letter" : "letters"}.`;
+  if (place.kind === "region") {
+    const center = firstLetter(place.capital);
+    return [
+      center ? `The regional center starts with ${center}.` : "This place is a region.",
+      spelling,
+    ];
+  }
+  const regionName = place.regionRecord?.name;
+  const where = regionName ? `It is in ${regionPhrase(regionName)}.` : "It sits in one of the regions.";
+  return [where, spelling];
+}
+
+/**
+ * Assisted correct answers count, leave the streak where it is, and do not change miss weight.
+ * A miss, including "I don't know", still adds a miss and ends the streak.
+ */
+export function settleScore(session, misses, key, correct, assisted) {
+  const next = {
+    correct: session.correct,
+    answered: session.answered + 1,
+    streak: session.streak,
+  };
+  if (correct) {
+    next.correct += 1;
+    if (!assisted) next.streak += 1;
+  } else {
+    next.streak = 0;
+  }
+  if (correct && assisted) return { session: next, misses };
+  return { session: next, misses: recordAnswer(misses, key, correct) };
+}
+
+/** Heaviest review weights, rolled up to the region that owns each miss. */
+export function regionWeights(atlas, misses) {
+  const totals = new Map();
+  function add(region, weight) {
+    if (!region || !(weight > 0)) return;
+    const current = totals.get(region.id) || { id: region.id, name: region.name, weight: 0 };
+    current.weight += weight;
+    totals.set(region.id, current);
+  }
+  for (const [key, weight] of Object.entries(misses || {})) {
+    const split = key.indexOf(":");
+    if (split < 0) continue;
+    const kind = key.slice(0, split);
+    const id = key.slice(split + 1);
+    if (kind === "region") add(atlas.regions.find((item) => item.id === id), weight);
+    else if (kind === "province") add(atlas.provinces.find((item) => item.id === id)?.regionRecord, weight);
+    else if (kind === "city") add(atlas.cities.find((item) => item.id === id)?.regionRecord, weight);
+  }
+  return [...totals.values()].sort((a, b) => b.weight - a.weight || a.name.localeCompare(b.name));
 }
 
 export function checkAnswer(question, response, catalog) {

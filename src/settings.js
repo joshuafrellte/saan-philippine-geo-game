@@ -1,5 +1,6 @@
 const CITY_SET_KEY = "saan-city-set-v1";
 const OUTLINES_KEY = "saan-outlines-v1";
+const LOCATE_KEY = "saan-locate-v1";
 
 function storageOf(storage) {
   return storage === undefined ? globalThis.localStorage : storage;
@@ -59,6 +60,27 @@ export function saveOutlines(outlines, storage) {
         cities: outlines.cities !== false,
       })
     );
+  } catch {
+    // Private mode and full storage should not break the quiz.
+  }
+}
+
+/** Default on. Stored as "false" when the player turns Type it framing off. */
+export function loadLocate(storage) {
+  const store = storageOf(storage);
+  if (!store) return true;
+  try {
+    return store.getItem(LOCATE_KEY) !== "false";
+  } catch {
+    return true;
+  }
+}
+
+export function saveLocate(enabled, storage) {
+  const store = storageOf(storage);
+  if (!store) return;
+  try {
+    store.setItem(LOCATE_KEY, enabled ? "true" : "false");
   } catch {
     // Private mode and full storage should not break the quiz.
   }

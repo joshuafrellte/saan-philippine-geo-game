@@ -16,6 +16,8 @@ const DIRECTIONS = [
   ["NW", "↖"],
 ];
 
+const MANILA_OFFSET_MS = 8 * 60 * 60 * 1000;
+
 export function manilaDate(now = new Date()) {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Manila",
@@ -23,6 +25,53 @@ export function manilaDate(now = new Date()) {
     month: "2-digit",
     day: "2-digit",
   }).format(now);
+}
+
+export function formatEditionDate(iso) {
+  const [year, month, day] = iso.split("-").map(Number);
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(year, month - 1, day)));
+}
+
+export function msUntilNextDaily(now = new Date()) {
+  const [year, month, day] = manilaDate(now).split("-").map(Number);
+  const nextMidnight = Date.UTC(year, month - 1, day + 1) - MANILA_OFFSET_MS;
+  return Math.max(0, nextMidnight - now.getTime());
+}
+
+export function formatCountdown(ms) {
+  const total = Math.max(0, Math.ceil(ms / 1000));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+}
+
+export function countdownPhrase(ms) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  if (hours === 0 && minutes === 0) {
+    return ms > 0 ? "Next province in less than a minute" : "Next province is ready";
+  }
+  const parts = [];
+  if (hours) parts.push(`${hours} ${hours === 1 ? "hour" : "hours"}`);
+  if (minutes) parts.push(`${minutes} ${minutes === 1 ? "minute" : "minutes"}`);
+  return `Next province in ${parts.join(" ")}`;
+}
+
+export function resultMarks(board) {
+  const marks = [];
+  for (let index = 0; index < DAILY_TRIES; index += 1) {
+    if (index >= board.guesses.length) marks.push("empty");
+    else if (board.won && index === board.guesses.length - 1) marks.push("hit");
+    else marks.push("miss");
+  }
+  return marks;
 }
 
 export function puzzleNumber(iso) {

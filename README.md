@@ -14,7 +14,7 @@ Places you miss come back more often. The header counts them as "to review." Cle
 
 Name the day's province. You get six guesses. The puzzle changes at midnight in Manila, and everyone gets the same province that day.
 
-Each wrong guess shows how far away it was, and which way to go. A streak counts only when you win on back-to-back days. Copy result shares the day's score.
+Each wrong guess shows how far away it was, and which way to go. A streak counts only when you win on back-to-back days. Copy result shares the day's score. After the round, a clock counts down to the next province at midnight in Manila.
 
 As you type, a list of provinces appears. Arrow keys move through it. Enter or a click submits the highlighted name. A province you already guessed is left off the list. Close spellings count, and so do older names.
 

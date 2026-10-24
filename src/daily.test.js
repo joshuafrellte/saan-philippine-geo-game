@@ -3,10 +3,15 @@ import { buildAtlas } from "./atlas.js";
 import {
   applyGuess,
   boardForToday,
+  countdownPhrase,
   dailyProvince,
+  formatCountdown,
+  formatEditionDate,
   manilaDate,
+  msUntilNextDaily,
   placeBearing,
   puzzleNumber,
+  resultMarks,
   shareText,
 } from "./daily.js";
 import places from "../data/places.json";
@@ -74,5 +79,22 @@ describe("daily puzzle", () => {
   it("shares one square per guess", () => {
     const board = { date: "2026-10-23", guesses: ["cebu", "bohol", "batanes"], won: true, done: true, streak: 1 };
     expect(shareText(board, 296)).toBe("Saan? Daily #296\n2026-10-23 · 3/6\n⬛⬛🟩");
+    expect(resultMarks(board)).toEqual(["miss", "miss", "hit", "empty", "empty", "empty"]);
+    expect(formatEditionDate("2026-10-24")).toBe("October 24");
+  });
+
+  it("counts down to the next midnight in Manila", () => {
+    const oneMinute = new Date("2026-10-23T15:59:00Z");
+    const nextDay = new Date("2026-10-23T16:00:00Z");
+    expect(msUntilNextDaily(oneMinute)).toBe(60_000);
+    expect(msUntilNextDaily(nextDay)).toBe(86_400_000);
+    expect(formatCountdown(60_000)).toBe("00:01:00");
+    expect(formatCountdown((8 * 3600 + 14 * 60 + 22) * 1000)).toBe("08:14:22");
+    expect(formatCountdown(1_500)).toBe("00:00:02");
+    expect(formatCountdown(0)).toBe("00:00:00");
+    expect(countdownPhrase((8 * 3600 + 14 * 60 + 22) * 1000)).toBe("Next province in 8 hours 14 minutes");
+    expect(countdownPhrase(60 * 60 * 1000)).toBe("Next province in 1 hour");
+    expect(countdownPhrase(60 * 1000)).toBe("Next province in 1 minute");
+    expect(countdownPhrase(30 * 1000)).toBe("Next province in less than a minute");
   });
 });
