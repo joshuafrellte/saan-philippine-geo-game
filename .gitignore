@@ -1,0 +1,5 @@
+node_modules
+dist
+data/src-regions
+data/src-cities
+.DS_Store

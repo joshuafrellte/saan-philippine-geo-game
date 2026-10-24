@@ -1,0 +1,1514 @@
+{
+  "ncr": {
+    "seat": "Manila",
+    "facts": [
+      "Metro Manila is the only region made of cities and no provinces.",
+      "Malacañang, the presidential workplace, stands on the Pasig River in Manila."
+    ]
+  },
+  "car": {
+    "seat": "Baguio",
+    "facts": [
+      "The Cordillera is a mountain region, and Baguio sits in Benguet.",
+      "The rice terraces at Banaue are in Ifugao, one of its six provinces."
+    ]
+  },
+  "region-1": {
+    "seat": "San Fernando, La Union",
+    "facts": [
+      "The Ilocos Region faces the West Philippine Sea from Ilocos Norte down to Pangasinan.",
+      "Vigan, in Ilocos Sur, keeps a Spanish-era street grid."
+    ]
+  },
+  "region-2": {
+    "seat": "Tuguegarao",
+    "facts": [
+      "The Cagayan River, the country’s longest, runs through this valley.",
+      "Batanes is part of the region even though it lies out in the Luzon Strait."
+    ]
+  },
+  "region-3": {
+    "seat": "San Fernando, Pampanga",
+    "facts": [
+      "Central Luzon stretches from the Zambales mountains to Aurora on the Pacific.",
+      "Mount Pinatubo stands on the border of Zambales and Pampanga."
+    ]
+  },
+  "calabarzon": {
+    "seat": "Calamba",
+    "facts": [
+      "The region’s name is built from Cavite, Laguna, Batangas, Rizal, and Quezon.",
+      "Taal Volcano and Taal Lake are in Batangas."
+    ]
+  },
+  "mimaropa": {
+    "seat": "Calapan",
+    "facts": [
+      "MIMAROPA joins Mindoro, Marinduque, Romblon, and the long island of Palawan.",
+      "Calapan, the regional center, is on the northeast coast of Mindoro."
+    ]
+  },
+  "region-5": {
+    "seat": "Legazpi",
+    "facts": [
+      "Bicol includes the Bicol Peninsula plus the island provinces of Catanduanes and Masbate.",
+      "Mayon’s cone rises above Legazpi in Albay."
+    ]
+  },
+  "region-6": {
+    "seat": "Iloilo City",
+    "facts": [
+      "Western Visayas is Panay and Guimaras after Negros Occidental moved to the Negros Island Region.",
+      "Iloilo City sits on the strait between Panay and Guimaras."
+    ]
+  },
+  "region-7": {
+    "seat": "Cebu City",
+    "facts": [
+      "Central Visayas is now Cebu and Bohol.",
+      "In 1521 Ferdinand Magellan was killed on Mactan, which is tied to Cebu by bridges."
+    ]
+  },
+  "region-8": {
+    "seat": "Tacloban",
+    "facts": [
+      "Eastern Visayas covers Samar, Leyte, and the smaller island of Biliran.",
+      "The San Juanico Bridge links Tacloban on Leyte with Samar."
+    ]
+  },
+  "region-9": {
+    "seat": "Pagadian",
+    "facts": [
+      "The Zamboanga Peninsula points toward Sabah, and Sulu is now part of this region.",
+      "Zamboanga City is the peninsula’s largest city, while the regional center is Pagadian."
+    ]
+  },
+  "region-10": {
+    "seat": "Cagayan de Oro",
+    "facts": [
+      "Northern Mindanao meets the sea at Macajalar Bay and includes the island province of Camiguin.",
+      "Bukidnon is the inland plateau behind the coastal provinces."
+    ]
+  },
+  "region-11": {
+    "seat": "Davao City",
+    "facts": [
+      "Davao Region wraps the Davao Gulf.",
+      "Mount Apo, the country’s highest peak, stands between Davao del Sur and Cotabato."
+    ]
+  },
+  "region-12": {
+    "seat": "Koronadal",
+    "facts": [
+      "Soccsksargen takes its name from South Cotabato, Cotabato, Sultan Kudarat, Sarangani, and General Santos.",
+      "General Santos faces Sarangani Bay, while the regional center is Koronadal."
+    ]
+  },
+  "caraga": {
+    "seat": "Butuan",
+    "facts": [
+      "Caraga runs along the Pacific from Surigao del Norte south to Bislig.",
+      "Siargao, including the Cloud 9 surf break, is part of Surigao del Norte."
+    ]
+  },
+  "nir": {
+    "seat": "",
+    "facts": [
+      "Republic Act No. 12000 created the Negros Island Region from Negros Occidental, Negros Oriental, and Siquijor.",
+      "Bacolod and Dumaguete are its two largest cities, and no regional center has been settled."
+    ]
+  },
+  "barmm": {
+    "seat": "Cotabato City",
+    "facts": [
+      "Cotabato City is the seat of the Bangsamoro government.",
+      "The region includes the two Maguindanao provinces, Lanao del Sur, Basilan, and Tawi-Tawi, while Sulu moved to the Zamboanga Peninsula in 2025."
+    ]
+  },
+  "abra": {
+    "facts": [
+      "The Abra River crosses the province on its way west toward the sea.",
+      "Bangued, the capital, sits in the lowland rather than up in the Cordillera ridges."
+    ]
+  },
+  "agusan-del-norte": {
+    "facts": [
+      "Lake Mainit lies on the northern border, shared with Surigao del Norte.",
+      "Cabadbaran is the capital, while Butuan is the larger city on the Agusan River."
+    ]
+  },
+  "agusan-del-sur": {
+    "facts": [
+      "The Agusan Marsh spreads across the low middle of the province.",
+      "Prosperidad is the capital."
+    ]
+  },
+  "aklan": {
+    "facts": [
+      "Boracay is part of the municipality of Malay, at the province’s northwest tip.",
+      "Kalibo hosts the Ati-Atihan festival in January."
+    ]
+  },
+  "albay": {
+    "facts": [
+      "Mayon Volcano rises above the capital, Legazpi.",
+      "The province forms the eastern side of the Bicol Peninsula."
+    ]
+  },
+  "antique": {
+    "facts": [
+      "Antique is the west coast of Panay, facing the Sulu Sea.",
+      "San Jose de Buenavista is the capital."
+    ]
+  },
+  "apayao": {
+    "facts": [
+      "Kabugao is the official capital, while the provincial government works from Luna.",
+      "The Apayao River drains north toward the Luzon Strait."
+    ]
+  },
+  "aurora": {
+    "facts": [
+      "Aurora faces the Philippine Sea, with Baler as its capital.",
+      "It was named for Aurora Quezon and separated from Quezon province."
+    ]
+  },
+  "basilan": {
+    "facts": [
+      "Lamitan is the capital of this island province.",
+      "Basilan lies across the Basilan Strait from the Zamboanga Peninsula."
+    ]
+  },
+  "bataan": {
+    "facts": [
+      "The Bataan peninsula closes the west side of Manila Bay.",
+      "Balanga is the capital, and Mount Samat is the ridge remembered for the 1942 fighting."
+    ]
+  },
+  "batanes": {
+    "facts": [
+      "Basco, the capital, is on Batan Island.",
+      "Batanes is the northernmost province, closer to Taiwan than to Manila."
+    ]
+  },
+  "batangas": {
+    "facts": [
+      "Taal Volcano stands in Taal Lake, in the middle of the province.",
+      "Batangas City is the capital, on Batangas Bay."
+    ]
+  },
+  "benguet": {
+    "facts": [
+      "La Trinidad is the capital, in the valley next to Baguio.",
+      "The Halsema Highway climbs from the lowlands through Benguet toward Mountain Province."
+    ]
+  },
+  "biliran": {
+    "facts": [
+      "Naval is the capital of this island north of Leyte.",
+      "Biliran was a sub-province of Leyte before it became a province of its own."
+    ]
+  },
+  "bohol": {
+    "facts": [
+      "The Chocolate Hills are the province’s grassy limestone mounds.",
+      "Tagbilaran, the capital, faces Cebu across a narrow strait."
+    ]
+  },
+  "bukidnon": {
+    "facts": [
+      "Mount Kitanglad rises over the plateau around Malaybalay, the capital.",
+      "The province is inland, with no coastline of its own."
+    ]
+  },
+  "bulacan": {
+    "facts": [
+      "Malolos, the capital, hosted the revolutionary congress of 1898.",
+      "The province begins immediately north of Metro Manila."
+    ]
+  },
+  "cagayan": {
+    "facts": [
+      "The Babuyan Islands are part of Cagayan.",
+      "Tuguegarao, the capital, stands on the Cagayan River and is also the regional center."
+    ]
+  },
+  "camarines-norte": {
+    "facts": [
+      "Daet, the capital, has the country’s first monument to José Rizal.",
+      "The province faces the Philippine Sea on the north side of Bicol."
+    ]
+  },
+  "camarines-sur": {
+    "facts": [
+      "Pili is the capital, while Naga is the larger city.",
+      "Mount Isarog rises inland from Naga."
+    ]
+  },
+  "camiguin": {
+    "facts": [
+      "Hibok-Hibok is the volcano above the capital, Mambajao.",
+      "Camiguin is one of the country’s smallest provinces, an island north of Misamis Oriental."
+    ]
+  },
+  "capiz": {
+    "facts": [
+      "Roxas City, the capital, sits at the mouth of the Panay River.",
+      "The province occupies the northeast of Panay."
+    ]
+  },
+  "catanduanes": {
+    "facts": [
+      "Virac is the capital of this island east of the Bicol Peninsula.",
+      "A Pacific typhoon often reaches Catanduanes before the rest of Luzon."
+    ]
+  },
+  "cavite": {
+    "facts": [
+      "Imus is the capital.",
+      "Kawit, on Manila Bay, is where independence was declared in 1898."
+    ]
+  },
+  "cebu": {
+    "facts": [
+      "Mactan is linked to Cebu Island by bridges.",
+      "Cebu City, the capital, faces Bohol across the strait."
+    ]
+  },
+  "cotabato": {
+    "facts": [
+      "Kidapawan, the capital, sits at the foot of Mount Apo’s west side.",
+      "The Pulangi, also called the Rio Grande de Mindanao, crosses the province."
+    ]
+  },
+  "davao-de-oro": {
+    "facts": [
+      "Nabunturan is the capital.",
+      "The province was called Compostela Valley before it was renamed Davao de Oro."
+    ]
+  },
+  "davao-del-norte": {
+    "facts": [
+      "Tagum, the capital, lies inland from the north end of the Davao Gulf.",
+      "Samal Island sits offshore in the gulf."
+    ]
+  },
+  "davao-del-sur": {
+    "facts": [
+      "Digos is the capital.",
+      "Mount Apo’s eastern slopes fall toward the Davao Gulf."
+    ]
+  },
+  "davao-occidental": {
+    "facts": [
+      "Malita, the capital, faces the Celebes Sea.",
+      "The province was separated from Davao del Sur in 2013."
+    ]
+  },
+  "davao-oriental": {
+    "facts": [
+      "Mati, the capital, lies beside Pujada Bay.",
+      "Pusan Point is the easternmost point of land in the country."
+    ]
+  },
+  "dinagat-islands": {
+    "facts": [
+      "San Jose is the capital.",
+      "The islands sit north of Surigao, between the Surigao Strait and the Philippine Sea."
+    ]
+  },
+  "eastern-samar": {
+    "facts": [
+      "Borongan, the capital, faces the Pacific.",
+      "Homonhon, where Magellan’s ships landed in 1521, is part of the province."
+    ]
+  },
+  "guimaras": {
+    "facts": [
+      "Jordan is the capital.",
+      "The island is known for its mangoes and sits in the strait between Panay and Negros."
+    ]
+  },
+  "ifugao": {
+    "facts": [
+      "The rice terraces at Banaue are the province’s best-known landscape.",
+      "Lagawe is the capital."
+    ]
+  },
+  "ilocos-norte": {
+    "facts": [
+      "Laoag is the capital.",
+      "The wind turbines at Bangui stand along the north coast."
+    ]
+  },
+  "ilocos-sur": {
+    "facts": [
+      "Vigan, the capital, preserves a Spanish street grid that is a UNESCO World Heritage site.",
+      "The province faces the West Philippine Sea."
+    ]
+  },
+  "iloilo": {
+    "facts": [
+      "Iloilo City, the capital, looks across a narrow strait to Guimaras.",
+      "The province covers the southeast of Panay."
+    ]
+  },
+  "isabela": {
+    "facts": [
+      "Ilagan is the capital.",
+      "Isabela is Luzon’s largest province by land area and follows the Cagayan River."
+    ]
+  },
+  "kalinga": {
+    "facts": [
+      "Tabuk, the capital, stands on the Chico River.",
+      "The Chico flows north out of the Cordillera toward the Cagayan."
+    ]
+  },
+  "la-union": {
+    "facts": [
+      "San Fernando City is both the capital and the regional center of the Ilocos Region.",
+      "The province is a narrow coast between the Cordillera and the West Philippine Sea."
+    ]
+  },
+  "laguna": {
+    "facts": [
+      "Santa Cruz is the capital.",
+      "The province wraps the south shore of Laguna de Bay."
+    ]
+  },
+  "lanao-del-norte": {
+    "facts": [
+      "Tubod is the capital.",
+      "Maria Cristina Falls drops near Iligan, on the Agus River."
+    ]
+  },
+  "lanao-del-sur": {
+    "facts": [
+      "Marawi, the capital, stands on the north shore of Lake Lanao.",
+      "Lake Lanao is one of the country’s largest lakes."
+    ]
+  },
+  "leyte": {
+    "facts": [
+      "Tacloban, the capital, faces Samar across the San Juanico Strait.",
+      "Leyte Gulf opens on the province’s east side."
+    ]
+  },
+  "maguindanao-del-norte": {
+    "facts": [
+      "Datu Odin Sinsuat is the capital.",
+      "The province was created in 2022 when Maguindanao was split."
+    ]
+  },
+  "maguindanao-del-sur": {
+    "facts": [
+      "Buluan is the capital.",
+      "This is the southern half of the old Maguindanao province."
+    ]
+  },
+  "marinduque": {
+    "facts": [
+      "Boac is the capital.",
+      "The Moriones festival is held here in Holy Week."
+    ]
+  },
+  "masbate": {
+    "facts": [
+      "Masbate City is the capital.",
+      "The province includes the islands of Masbate, Ticao, and Burias."
+    ]
+  },
+  "misamis-occidental": {
+    "facts": [
+      "Oroquieta is the capital.",
+      "Ozamiz is the larger city, on Panguil Bay."
+    ]
+  },
+  "misamis-oriental": {
+    "facts": [
+      "Cagayan de Oro, the capital, stands on Macajalar Bay.",
+      "The province forms the north-central coast of Mindanao."
+    ]
+  },
+  "mountain-province": {
+    "facts": [
+      "Bontoc is the capital.",
+      "Sagada is known for its limestone caves and hanging coffins."
+    ]
+  },
+  "negros-occidental": {
+    "facts": [
+      "Bacolod is the capital.",
+      "The province covers the western half of Negros and was long a center of sugar planting."
+    ]
+  },
+  "negros-oriental": {
+    "facts": [
+      "Dumaguete, the capital, faces the Tañon Strait toward Cebu.",
+      "Apo Island, a marine reserve, lies off the south coast."
+    ]
+  },
+  "northern-samar": {
+    "facts": [
+      "Catarman is the capital.",
+      "The rock formations at Biri stand on the north side of Samar."
+    ]
+  },
+  "nueva-ecija": {
+    "facts": [
+      "Palayan is the capital, while Cabanatuan is the larger city.",
+      "The province is a major rice plain of Central Luzon."
+    ]
+  },
+  "nueva-vizcaya": {
+    "facts": [
+      "Bayombong is the capital.",
+      "The Magat River is dammed near the border with Isabela."
+    ]
+  },
+  "occidental-mindoro": {
+    "facts": [
+      "Mamburao is the capital.",
+      "Apo Reef lies offshore in the Mindoro Strait."
+    ]
+  },
+  "oriental-mindoro": {
+    "facts": [
+      "Calapan is the capital and the regional center of MIMAROPA.",
+      "Mount Halcon is the highest peak on Mindoro."
+    ]
+  },
+  "palawan": {
+    "facts": [
+      "Puerto Princesa is the capital.",
+      "The Puerto Princesa Underground River runs out to the west coast."
+    ]
+  },
+  "pampanga": {
+    "facts": [
+      "San Fernando City is the capital and the regional center of Central Luzon.",
+      "Mount Arayat rises from the plain north of the capital."
+    ]
+  },
+  "pangasinan": {
+    "facts": [
+      "Lingayen, the capital, sits on Lingayen Gulf.",
+      "The Hundred Islands lie off Alaminos."
+    ]
+  },
+  "quezon": {
+    "facts": [
+      "Lucena is the capital.",
+      "Mount Banahaw stands on the border with Laguna."
+    ]
+  },
+  "quirino": {
+    "facts": [
+      "Cabarroguis is the capital.",
+      "The province is landlocked, between the Cagayan valley and the Sierra Madre."
+    ]
+  },
+  "rizal": {
+    "facts": [
+      "Antipolo, the capital, sits in the hills east of Metro Manila.",
+      "The province touches the north and east shores of Laguna de Bay."
+    ]
+  },
+  "romblon": {
+    "facts": [
+      "The municipality of Romblon is the capital.",
+      "Sibuyan Island is known for Mount Guiting-Guiting."
+    ]
+  },
+  "samar": {
+    "facts": [
+      "Catbalogan, the capital, faces the Samar Sea.",
+      "This is the western part of Samar Island; Eastern Samar faces the Pacific."
+    ]
+  },
+  "sarangani": {
+    "facts": [
+      "Alabel is the capital.",
+      "The province’s coast runs along Sarangani Bay and the Celebes Sea around General Santos."
+    ]
+  },
+  "siquijor": {
+    "facts": [
+      "The municipality of Siquijor is the capital.",
+      "The island was part of Negros Oriental before it became its own province."
+    ]
+  },
+  "sorsogon": {
+    "facts": [
+      "Sorsogon City is the capital.",
+      "Ferries leave Matnog, at the peninsula’s tip, for Samar."
+    ]
+  },
+  "south-cotabato": {
+    "facts": [
+      "Koronadal is the capital and the regional center of Soccsksargen.",
+      "Lake Sebu lies in the highland south of the province."
+    ]
+  },
+  "southern-leyte": {
+    "facts": [
+      "Maasin is the capital.",
+      "Limasawa is remembered as a 1521 landing place of Magellan’s expedition."
+    ]
+  },
+  "sultan-kudarat": {
+    "facts": [
+      "Isulan is the capital.",
+      "The province reaches the Celebes Sea south of Cotabato."
+    ]
+  },
+  "sulu": {
+    "facts": [
+      "Jolo is the capital.",
+      "The archipelago lies between Basilan and Tawi-Tawi and is now part of the Zamboanga Peninsula region."
+    ]
+  },
+  "surigao-del-norte": {
+    "facts": [
+      "Surigao City, the capital, stands at Mindanao’s northern tip.",
+      "Siargao is part of the province."
+    ]
+  },
+  "surigao-del-sur": {
+    "facts": [
+      "Tandag is the capital.",
+      "The province has a long Pacific coast south of Surigao del Norte."
+    ]
+  },
+  "tarlac": {
+    "facts": [
+      "Tarlac City is the capital.",
+      "The province sits between the Zambales mountains and the Central Luzon plain."
+    ]
+  },
+  "tawi-tawi": {
+    "facts": [
+      "Bongao is the capital.",
+      "Tawi-Tawi is the southernmost province, close to Sabah."
+    ]
+  },
+  "zambales": {
+    "facts": [
+      "Iba, the capital, sits on the coast west of the Zambales mountains.",
+      "The Zambales mountains include the west side of Mount Pinatubo."
+    ]
+  },
+  "zamboanga-del-norte": {
+    "facts": [
+      "Dipolog is the capital.",
+      "José Rizal was exiled in nearby Dapitan."
+    ]
+  },
+  "zamboanga-del-sur": {
+    "facts": [
+      "Pagadian is the capital and the regional center of the Zamboanga Peninsula.",
+      "The province faces Illana Bay."
+    ]
+  },
+  "zamboanga-sibugay": {
+    "facts": [
+      "Ipil is the capital.",
+      "The province was carved out of Zamboanga del Sur in 2001."
+    ]
+  },
+  "manila": {
+    "facts": [
+      "The Pasig River meets Manila Bay inside the city.",
+      "Intramuros is the old walled Spanish city on the bay."
+    ]
+  },
+  "quezon-city": {
+    "facts": [
+      "Quezon City is the country’s most populous city.",
+      "The Batasang Pambansa, the House of Representatives, meets here."
+    ]
+  },
+  "caloocan": {
+    "facts": [
+      "Caloocan is split into a southern part beside Manila and a northern part toward Bulacan.",
+      "The city lies along the old rail line north out of Manila."
+    ]
+  },
+  "las-pinas": {
+    "facts": [
+      "The Bamboo Organ is in St. Joseph Parish in Las Piñas.",
+      "The city faces Manila Bay on Metro Manila’s southwest side."
+    ]
+  },
+  "makati": {
+    "facts": [
+      "The Ayala business district is the city’s financial center.",
+      "Makati borders Manila, Pasig, and Taguig."
+    ]
+  },
+  "malabon": {
+    "facts": [
+      "The Tullahan River runs through Malabon toward Manila Bay.",
+      "The city is known for pancit Malabon."
+    ]
+  },
+  "mandaluyong": {
+    "facts": [
+      "Mandaluyong is one of Metro Manila’s smallest cities by area.",
+      "Part of the Ortigas Center spills into it from Pasig."
+    ]
+  },
+  "marikina": {
+    "facts": [
+      "The Marikina River runs through the city on its way to the Pasig.",
+      "Marikina has long been a center of shoe making."
+    ]
+  },
+  "muntinlupa": {
+    "facts": [
+      "Muntinlupa is the southern end of Metro Manila’s main spine.",
+      "Laguna de Bay borders the city on the east."
+    ]
+  },
+  "navotas": {
+    "facts": [
+      "Navotas is a fishing city on Manila Bay.",
+      "Its fish port is one of the country’s main landings for the catch."
+    ]
+  },
+  "paranaque": {
+    "facts": [
+      "Parañaque runs inland from Manila Bay.",
+      "The airport complex is shared with neighboring Pasay."
+    ]
+  },
+  "pasay": {
+    "facts": [
+      "Ninoy Aquino International Airport occupies much of Pasay.",
+      "The Mall of Asia stands on the Manila Bay waterfront."
+    ]
+  },
+  "pasig": {
+    "facts": [
+      "Pasig shares its name with the river that crosses the city.",
+      "Ortigas Center is its main business district."
+    ]
+  },
+  "san-juan": {
+    "facts": [
+      "San Juan is Metro Manila’s smallest city by land area.",
+      "The Pinaglabanan Shrine marks fighting at the start of the 1896 revolution."
+    ]
+  },
+  "taguig": {
+    "facts": [
+      "Bonifacio Global City stands on former military land in Taguig.",
+      "The city touches Laguna de Bay and borders Makati."
+    ]
+  },
+  "valenzuela": {
+    "facts": [
+      "Valenzuela is northern Metro Manila, on the border with Bulacan.",
+      "The Tullahan River crosses the city toward the bay."
+    ]
+  },
+  "angeles": {
+    "facts": [
+      "Clark, the former US air base, is in Angeles.",
+      "The city governs itself, inside the bounds of Pampanga."
+    ]
+  },
+  "baguio": {
+    "facts": [
+      "Baguio sits about 1,500 meters up in the Cordillera.",
+      "It is the regional center of the Cordillera and is surrounded by Benguet."
+    ]
+  },
+  "olongapo": {
+    "facts": [
+      "Olongapo stands at the head of Subic Bay.",
+      "The former Subic naval base is now a freeport beside the city."
+    ]
+  },
+  "lucena": {
+    "facts": [
+      "Lucena is the capital of Quezon and faces Tayabas Bay.",
+      "It governs itself, separate from the province around it."
+    ]
+  },
+  "puerto-princesa": {
+    "facts": [
+      "Puerto Princesa is the capital of Palawan.",
+      "Honda Bay and the Underground River are both reached from the city."
+    ]
+  },
+  "cebu-city": {
+    "facts": [
+      "Cebu City is the capital of Cebu and the regional center of Central Visayas.",
+      "Magellan’s Cross stands in the old Spanish quarter."
+    ]
+  },
+  "lapu-lapu": {
+    "facts": [
+      "Lapu-Lapu occupies Mactan Island.",
+      "Mactan-Cebu International Airport is in the city."
+    ]
+  },
+  "mandaue": {
+    "facts": [
+      "Mandaue lies between Cebu City and the bridges to Mactan.",
+      "The city governs itself, separate from Cebu province."
+    ]
+  },
+  "iloilo-city": {
+    "facts": [
+      "Iloilo City is the capital of Iloilo and the regional center of Western Visayas.",
+      "The Iloilo River reaches the strait beside Guimaras here."
+    ]
+  },
+  "bacolod": {
+    "facts": [
+      "Bacolod is the capital of Negros Occidental.",
+      "The MassKara festival is held in the city each October."
+    ]
+  },
+  "tacloban": {
+    "facts": [
+      "Tacloban is the capital of Leyte and the regional center of Eastern Visayas.",
+      "Typhoon Yolanda came ashore on this coast in 2013."
+    ]
+  },
+  "zamboanga-city": {
+    "facts": [
+      "Zamboanga City faces the Basilan Strait at the tip of the peninsula.",
+      "Chavacano, a Spanish-based creole, is widely spoken here."
+    ]
+  },
+  "iligan": {
+    "facts": [
+      "Iligan stands where the Agus River leaves Lake Lanao for Iligan Bay.",
+      "Maria Cristina Falls is on that river beside the city."
+    ]
+  },
+  "cagayan-de-oro": {
+    "facts": [
+      "Cagayan de Oro is the capital of Misamis Oriental and the regional center.",
+      "The Cagayan River of Mindanao meets Macajalar Bay here."
+    ]
+  },
+  "davao-city": {
+    "facts": [
+      "Davao City is the regional center and the country’s largest city by land area.",
+      "Mount Apo rises on the city’s western side."
+    ]
+  },
+  "general-santos": {
+    "facts": [
+      "General Santos faces Sarangani Bay and is a major tuna port.",
+      "The city governs itself, separate from South Cotabato."
+    ]
+  },
+  "butuan": {
+    "facts": [
+      "Butuan stands on the Agusan River, inland from Butuan Bay.",
+      "Ancient balangay boats were recovered from the city’s river mud."
+    ]
+  },
+  "cotabato-city": {
+    "facts": [
+      "Cotabato City is the seat of the Bangsamoro government.",
+      "The Rio Grande de Mindanao passes the city on its way to Illana Bay."
+    ]
+  },
+  "dagupan": {
+    "facts": [
+      "Dagupan is known for bangus, milkfish raised in its ponds.",
+      "The city sits on a branch of Lingayen Gulf."
+    ]
+  },
+  "naga": {
+    "facts": [
+      "Naga is the main city of Camarines Sur, though Pili is the provincial capital.",
+      "The city governs itself and stands on the Bicol River."
+    ]
+  },
+  "ormoc": {
+    "facts": [
+      "Ormoc faces Ormoc Bay on the west side of Leyte.",
+      "It governs itself, separate from the rest of the province."
+    ]
+  },
+  "santiago": {
+    "facts": [
+      "Santiago governs itself inside Isabela, near the Magat River.",
+      "It is the main city of the province’s southern end."
+    ]
+  },
+  "tabuk": {
+    "facts": [
+      "Tabuk is the capital of Kalinga.",
+      "The city stands on the Chico River in a wide valley."
+    ]
+  },
+  "batac": {
+    "facts": [
+      "Batac is in Ilocos Norte, south of Laoag.",
+      "The Marcos museum and mausoleum are in the city."
+    ]
+  },
+  "laoag": {
+    "facts": [
+      "Laoag is the capital of Ilocos Norte.",
+      "The Laoag River reaches the sea just west of the city."
+    ]
+  },
+  "candon": {
+    "facts": [
+      "Candon is on the Ilocos Sur coast.",
+      "The city is known for its tobacco and for the September harvest festival."
+    ]
+  },
+  "vigan": {
+    "facts": [
+      "Vigan is the capital of Ilocos Sur.",
+      "Its grid of Spanish houses is a UNESCO World Heritage site."
+    ]
+  },
+  "san-fernando-la-union": {
+    "facts": [
+      "San Fernando City is the capital of La Union.",
+      "It is also the regional center of the Ilocos Region."
+    ]
+  },
+  "alaminos": {
+    "facts": [
+      "Alaminos faces the Hundred Islands in Lingayen Gulf.",
+      "The city is on the western coast of Pangasinan."
+    ]
+  },
+  "san-carlos-pangasinan": {
+    "facts": [
+      "San Carlos is inland Pangasinan, east of Lingayen.",
+      "It shares its short name with San Carlos in Negros Occidental."
+    ]
+  },
+  "urdaneta": {
+    "facts": [
+      "Urdaneta stands where major roads meet in eastern Pangasinan.",
+      "The city is a trading stop on the way from Manila toward La Union."
+    ]
+  },
+  "tuguegarao": {
+    "facts": [
+      "Tuguegarao is the capital of Cagayan and the regional center.",
+      "The city stands on the Cagayan River."
+    ]
+  },
+  "cauayan": {
+    "facts": [
+      "Cauayan is in southern Isabela.",
+      "It is a commercial city on the road between Santiago and Ilagan."
+    ]
+  },
+  "ilagan": {
+    "facts": [
+      "Ilagan is the capital of Isabela.",
+      "The Cagayan River passes to the west of the city."
+    ]
+  },
+  "balanga": {
+    "facts": [
+      "Balanga is the capital of Bataan.",
+      "The city sits inland from Manila Bay, with Mount Samat to the west."
+    ]
+  },
+  "baliwag": {
+    "facts": [
+      "Baliwag is in Bulacan, north of Malolos.",
+      "The city holds a long Holy Week procession."
+    ]
+  },
+  "malolos": {
+    "facts": [
+      "Malolos is the capital of Bulacan.",
+      "The Barasoain Church was the site of the 1898 revolutionary congress."
+    ]
+  },
+  "meycauayan": {
+    "facts": [
+      "Meycauayan borders Valenzuela, at the edge of Metro Manila.",
+      "The city has a long jewelry-making trade."
+    ]
+  },
+  "san-jose-del-monte": {
+    "facts": [
+      "San Jose del Monte is Bulacan’s city closest to the hills of Rizal.",
+      "It grew as housing spread north from Quezon City."
+    ]
+  },
+  "cabanatuan": {
+    "facts": [
+      "Cabanatuan is the largest city of Nueva Ecija.",
+      "The provincial capital is Palayan, a short way south."
+    ]
+  },
+  "gapan": {
+    "facts": [
+      "Gapan is in southern Nueva Ecija, near the Pampanga border.",
+      "The city is a market town on the road south toward Manila."
+    ]
+  },
+  "munoz": {
+    "facts": [
+      "Muñoz is the Science City in northern Nueva Ecija.",
+      "The Philippine Rice Research Institute has its main campus here."
+    ]
+  },
+  "palayan": {
+    "facts": [
+      "Palayan is the capital of Nueva Ecija.",
+      "It was planned as a capital and is smaller than neighboring Cabanatuan."
+    ]
+  },
+  "san-jose-nueva-ecija": {
+    "facts": [
+      "San Jose is in northern Nueva Ecija.",
+      "The city sits near the Pantabangan reservoir, on the way toward Nueva Vizcaya."
+    ]
+  },
+  "mabalacat": {
+    "facts": [
+      "Mabalacat borders Angeles and Clark in Pampanga.",
+      "The city includes the main gate area of the Clark Freeport."
+    ]
+  },
+  "san-fernando-pampanga": {
+    "facts": [
+      "San Fernando is the capital of Pampanga.",
+      "It is also the regional center of Central Luzon."
+    ]
+  },
+  "tarlac-city": {
+    "facts": [
+      "Tarlac City is the capital of Tarlac.",
+      "It stands where the MacArthur Highway crosses the province."
+    ]
+  },
+  "batangas-city": {
+    "facts": [
+      "Batangas City is the capital of Batangas.",
+      "The port on Batangas Bay is a main ferry link to Mindoro and Romblon."
+    ]
+  },
+  "calaca": {
+    "facts": [
+      "Calaca is on the Batangas coast, west of Batangas City.",
+      "Power plants along this shore feed the Luzon grid."
+    ]
+  },
+  "lipa": {
+    "facts": [
+      "Lipa sits inland in Batangas, above the route to Quezon.",
+      "The city is a commercial center for the coffee and farming country around it."
+    ]
+  },
+  "sto-tomas": {
+    "facts": [
+      "Sto. Tomas borders Laguna, on the road between Manila and Batangas.",
+      "The city grew along the STAR tollway."
+    ]
+  },
+  "tanauan": {
+    "facts": [
+      "Tanauan is in Batangas, between Sto. Tomas and Lipa.",
+      "Apolinario Mabini was born in the city."
+    ]
+  },
+  "bacoor": {
+    "facts": [
+      "Bacoor faces Manila Bay at the north end of Cavite.",
+      "The city borders Las Piñas."
+    ]
+  },
+  "carmona": {
+    "facts": [
+      "Carmona is inland Cavite, on the border with Laguna.",
+      "It became a city in 2023."
+    ]
+  },
+  "cavite-city": {
+    "facts": [
+      "Cavite City occupies a hook of land beside Cavite Puerto.",
+      "It is one of the oldest Spanish ports on Manila Bay."
+    ]
+  },
+  "dasmarinas": {
+    "facts": [
+      "Dasmariñas is a large inland city of Cavite.",
+      "It sits south of Imus, on the road toward Tagaytay."
+    ]
+  },
+  "general-trias": {
+    "facts": [
+      "General Trias lies between Imus and Tanza in Cavite.",
+      "The city is part of the built-up belt south of Manila Bay."
+    ]
+  },
+  "imus": {
+    "facts": [
+      "Imus is the capital of Cavite.",
+      "The city is inland from Bacoor, on the road south from Metro Manila."
+    ]
+  },
+  "tagaytay": {
+    "facts": [
+      "Tagaytay sits on a ridge looking down at Taal Volcano.",
+      "The city is Cavite’s highland edge, cooler than the coast."
+    ]
+  },
+  "trece-martires": {
+    "facts": [
+      "Trece Martires was the capital of Cavite before the capital moved to Imus.",
+      "The city was named for the thirteen Cavite martyrs of 1896."
+    ]
+  },
+  "binan": {
+    "facts": [
+      "Biñan is in Laguna, on the southwest shore of Laguna de Bay.",
+      "It borders Muntinlupa and is part of the urban belt south of Manila."
+    ]
+  },
+  "cabuyao": {
+    "facts": [
+      "Cabuyao lies between Biñan and Calamba.",
+      "The city faces Laguna de Bay."
+    ]
+  },
+  "calamba": {
+    "facts": [
+      "Calamba is the capital of Laguna and the regional center of Calabarzon.",
+      "José Rizal was born in the city."
+    ]
+  },
+  "san-pablo": {
+    "facts": [
+      "San Pablo is known for the Seven Lakes around the city.",
+      "It sits in southern Laguna, near the border with Quezon and Batangas."
+    ]
+  },
+  "san-pedro": {
+    "facts": [
+      "San Pedro is Laguna’s city closest to Metro Manila.",
+      "It borders Muntinlupa and faces Laguna de Bay."
+    ]
+  },
+  "santa-rosa": {
+    "facts": [
+      "Santa Rosa lies between Biñan and Cabuyao.",
+      "The Enchanted Kingdom park is in the city."
+    ]
+  },
+  "tayabas": {
+    "facts": [
+      "Tayabas is an inland city of Quezon, in the hills above Lucena.",
+      "The stone basilica of St. Michael dominates the old town."
+    ]
+  },
+  "antipolo": {
+    "facts": [
+      "Antipolo is the capital of Rizal.",
+      "The city climbs the hills immediately east of Metro Manila."
+    ]
+  },
+  "calapan": {
+    "facts": [
+      "Calapan is the capital of Oriental Mindoro and the regional center of MIMAROPA.",
+      "Ferries from Batangas arrive on this coast."
+    ]
+  },
+  "legazpi": {
+    "facts": [
+      "Legazpi is the capital of Albay and the regional center of Bicol.",
+      "Mayon Volcano rises just northwest of the city."
+    ]
+  },
+  "ligao": {
+    "facts": [
+      "Ligao is inland Albay, on the road from Legazpi toward Camarines Sur.",
+      "The city sits in the Bicol valley, with Mayon to the southeast."
+    ]
+  },
+  "tabaco": {
+    "facts": [
+      "Tabaco faces Tabaco Bay, north of Mayon.",
+      "The port is a ferry link toward Catanduanes."
+    ]
+  },
+  "iriga": {
+    "facts": [
+      "Iriga stands beside Mount Iriga in Camarines Sur.",
+      "The city is south of Naga, on the road toward Albay."
+    ]
+  },
+  "masbate-city": {
+    "facts": [
+      "Masbate City is the capital of Masbate.",
+      "It faces the strait that separates Masbate Island from the mainland of Bicol."
+    ]
+  },
+  "sorsogon-city": {
+    "facts": [
+      "Sorsogon City is the capital of Sorsogon.",
+      "It was formed by joining the towns of Sorsogon and Bacon."
+    ]
+  },
+  "roxas": {
+    "facts": [
+      "Roxas City is the capital of Capiz.",
+      "It stands at the mouth of the Panay River."
+    ]
+  },
+  "passi": {
+    "facts": [
+      "Passi is inland Iloilo, in the hills of Panay.",
+      "The city is a trading town on the road across the island."
+    ]
+  },
+  "bago": {
+    "facts": [
+      "Bago is on the west coast of Negros, south of Bacolod.",
+      "The city faces the strait toward Guimaras."
+    ]
+  },
+  "cadiz": {
+    "facts": [
+      "Cadiz is on the north coast of Negros Occidental.",
+      "The city looks across the Visayan Sea."
+    ]
+  },
+  "escalante": {
+    "facts": [
+      "Escalante is on the northeast coast of Negros Occidental.",
+      "It sits between Cadiz and Sagay."
+    ]
+  },
+  "himamaylan": {
+    "facts": [
+      "Himamaylan is on the west coast of Negros, south of Bago.",
+      "The city faces the Guimaras Strait."
+    ]
+  },
+  "kabankalan": {
+    "facts": [
+      "Kabankalan is in southern Negros Occidental.",
+      "It is a commercial city for the farms of the province’s south."
+    ]
+  },
+  "la-carlota": {
+    "facts": [
+      "La Carlota sits at the foot of Mount Kanlaon.",
+      "The city is inland, east of Bacolod, in sugar country."
+    ]
+  },
+  "sagay": {
+    "facts": [
+      "Sagay is on the north coast of Negros Occidental.",
+      "The city’s offshore reefs are a protected seascape."
+    ]
+  },
+  "san-carlos-negros": {
+    "facts": [
+      "San Carlos faces the Tañon Strait on the east side of Negros Occidental.",
+      "It shares its short name with San Carlos in Pangasinan."
+    ]
+  },
+  "silay": {
+    "facts": [
+      "Silay is just north of Bacolod.",
+      "Old sugar-planter houses still line the city."
+    ]
+  },
+  "sipalay": {
+    "facts": [
+      "Sipalay is on the southwest coast of Negros Occidental.",
+      "The city faces the Sulu Sea, near the border with Negros Oriental."
+    ]
+  },
+  "talisay-negros": {
+    "facts": [
+      "Talisay borders Bacolod to the south.",
+      "It shares its short name with Talisay in Cebu."
+    ]
+  },
+  "victorias": {
+    "facts": [
+      "Victorias is north of Silay, inland from the coast.",
+      "The city is known for its sugar milling."
+    ]
+  },
+  "bais": {
+    "facts": [
+      "Bais faces the Tañon Strait in Negros Oriental.",
+      "The city is a whale-and-dolphin watching base."
+    ]
+  },
+  "bayawan": {
+    "facts": [
+      "Bayawan is on the south coast of Negros Oriental.",
+      "The city faces the Sulu Sea."
+    ]
+  },
+  "canlaon": {
+    "facts": [
+      "Canlaon is the city on the Negros Oriental side of Mount Kanlaon.",
+      "The volcano’s peak is on the border with Negros Occidental."
+    ]
+  },
+  "dumaguete": {
+    "facts": [
+      "Dumaguete is the capital of Negros Oriental.",
+      "Silliman University faces the boulevard along the Tañon Strait."
+    ]
+  },
+  "guihulngan": {
+    "facts": [
+      "Guihulngan is on the Negros Oriental coast, facing Cebu.",
+      "The city lies north of Dumaguete along the Tañon Strait."
+    ]
+  },
+  "tanjay": {
+    "facts": [
+      "Tanjay is on the east coast of Negros Oriental.",
+      "It sits between Dumaguete and Bais."
+    ]
+  },
+  "tagbilaran": {
+    "facts": [
+      "Tagbilaran is the capital of Bohol.",
+      "The city faces Cebu across a narrow strait."
+    ]
+  },
+  "bogo": {
+    "facts": [
+      "Bogo is near the north end of Cebu Island.",
+      "The city faces the Camotes Sea."
+    ]
+  },
+  "carcar": {
+    "facts": [
+      "Carcar is on the southeast coast of Cebu, south of Cebu City.",
+      "The city is known for its lechon and for its old Spanish plaza."
+    ]
+  },
+  "danao": {
+    "facts": [
+      "Danao is on Cebu’s east coast, north of Cebu City.",
+      "The city faces the Camotes Sea."
+    ]
+  },
+  "naga-cebu": {
+    "facts": [
+      "This Naga is on Cebu’s east coast, south of Cebu City.",
+      "It shares its short name with Naga in Camarines Sur."
+    ]
+  },
+  "talisay-cebu": {
+    "facts": [
+      "Talisay borders Cebu City to the south.",
+      "It shares its short name with Talisay in Negros Occidental."
+    ]
+  },
+  "toledo": {
+    "facts": [
+      "Toledo is on Cebu’s west coast, facing Negros.",
+      "Copper has long been mined in the hills above the city."
+    ]
+  },
+  "borongan": {
+    "facts": [
+      "Borongan is the capital of Eastern Samar.",
+      "The city faces the Philippine Sea."
+    ]
+  },
+  "baybay": {
+    "facts": [
+      "Baybay is on the west coast of Leyte, facing the Camotes Sea.",
+      "The city sits south of Ormoc."
+    ]
+  },
+  "calbayog": {
+    "facts": [
+      "Calbayog is on the west coast of Samar.",
+      "The city faces the Samar Sea, north of Catbalogan."
+    ]
+  },
+  "catbalogan": {
+    "facts": [
+      "Catbalogan is the capital of Samar.",
+      "The city looks out on the Samar Sea."
+    ]
+  },
+  "maasin": {
+    "facts": [
+      "Maasin is the capital of Southern Leyte.",
+      "The city faces Bohol across the Canigao Channel."
+    ]
+  },
+  "dapitan": {
+    "facts": [
+      "Dapitan is where José Rizal was exiled in the 1890s.",
+      "The city is on Dapitan Bay, north of Dipolog."
+    ]
+  },
+  "dipolog": {
+    "facts": [
+      "Dipolog is the capital of Zamboanga del Norte.",
+      "The city faces the Sulu Sea on the peninsula’s north coast."
+    ]
+  },
+  "pagadian": {
+    "facts": [
+      "Pagadian is the capital of Zamboanga del Sur.",
+      "It is also the regional center of the Zamboanga Peninsula."
+    ]
+  },
+  "isabela-city": {
+    "facts": [
+      "Isabela City is on Basilan, across the strait from Zamboanga City.",
+      "It is the old capital of Basilan; Lamitan is the capital now."
+    ]
+  },
+  "malaybalay": {
+    "facts": [
+      "Malaybalay is the capital of Bukidnon.",
+      "The city sits on the plateau, with Mount Kitanglad to the west."
+    ]
+  },
+  "valencia": {
+    "facts": [
+      "Valencia is in central Bukidnon, south of Malaybalay.",
+      "The Pulangi River passes the city."
+    ]
+  },
+  "oroquieta": {
+    "facts": [
+      "Oroquieta is the capital of Misamis Occidental.",
+      "The city faces Iligan Bay."
+    ]
+  },
+  "ozamiz": {
+    "facts": [
+      "Ozamiz is the main port of Misamis Occidental.",
+      "The city stands on Panguil Bay, opposite Lanao del Norte."
+    ]
+  },
+  "tangub": {
+    "facts": [
+      "Tangub is at the inner end of Panguil Bay.",
+      "The city is in Misamis Occidental, south of Ozamiz."
+    ]
+  },
+  "el-salvador": {
+    "facts": [
+      "El Salvador is on Macajalar Bay, west of Cagayan de Oro.",
+      "Opol is the municipality between the two cities."
+    ]
+  },
+  "gingoog": {
+    "facts": [
+      "Gingoog faces Gingoog Bay in eastern Misamis Oriental.",
+      "The city is the province’s coast toward Caraga."
+    ]
+  },
+  "panabo": {
+    "facts": [
+      "Panabo is on the Davao Gulf, between Tagum and Davao City.",
+      "The city is a banana-shipping port."
+    ]
+  },
+  "samal": {
+    "facts": [
+      "Samal is the Island Garden City in the Davao Gulf.",
+      "The island faces Davao City across a narrow channel."
+    ]
+  },
+  "tagum": {
+    "facts": [
+      "Tagum is the capital of Davao del Norte.",
+      "The city lies inland from the north end of the Davao Gulf."
+    ]
+  },
+  "digos": {
+    "facts": [
+      "Digos is the capital of Davao del Sur.",
+      "The city is on the gulf coast, south of Davao City."
+    ]
+  },
+  "mati": {
+    "facts": [
+      "Mati is the capital of Davao Oriental.",
+      "Pujada Bay curves along the city’s shore."
+    ]
+  },
+  "kidapawan": {
+    "facts": [
+      "Kidapawan is the capital of Cotabato.",
+      "The city sits at the foot of Mount Apo’s west side."
+    ]
+  },
+  "koronadal": {
+    "facts": [
+      "Koronadal is the capital of South Cotabato.",
+      "It is also the regional center of Soccsksargen."
+    ]
+  },
+  "tacurong": {
+    "facts": [
+      "Tacurong is in Sultan Kudarat, on the road between Cotabato and Koronadal.",
+      "The city is a market town of the Allah Valley."
+    ]
+  },
+  "cabadbaran": {
+    "facts": [
+      "Cabadbaran is the capital of Agusan del Norte.",
+      "Butuan, the larger city, lies to the south on the Agusan River."
+    ]
+  },
+  "bayugan": {
+    "facts": [
+      "Bayugan is in Agusan del Sur, on the road north toward Butuan.",
+      "The city stands where the highway meets the Agusan valley."
+    ]
+  },
+  "surigao-city": {
+    "facts": [
+      "Surigao City is the capital of Surigao del Norte.",
+      "Ferries leave here for the islands of Dinagat and Siargao."
+    ]
+  },
+  "bislig": {
+    "facts": [
+      "Bislig is on the Pacific coast of Surigao del Sur.",
+      "The city faces Bislig Bay."
+    ]
+  },
+  "tandag": {
+    "facts": [
+      "Tandag is the capital of Surigao del Sur.",
+      "The city faces the Philippine Sea."
+    ]
+  },
+  "lamitan": {
+    "facts": [
+      "Lamitan is the capital of Basilan.",
+      "The city is inland on the island, east of Isabela City."
+    ]
+  },
+  "marawi": {
+    "facts": [
+      "Marawi is the capital of Lanao del Sur.",
+      "The city stands on the north shore of Lake Lanao."
+    ]
+  }
+}

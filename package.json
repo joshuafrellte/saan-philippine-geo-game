@@ -1,0 +1,22 @@
+{
+  "name": "saan",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "maps": "node scripts/prepare-maps.mjs"
+  },
+  "dependencies": {
+    "d3-geo": "^3.1.1",
+    "d3-selection": "^3.0.0",
+    "d3-zoom": "^3.0.0"
+  },
+  "devDependencies": {
+    "mapshaper": "^0.7.97",
+    "vite": "^6.3.5",
+    "vitest": "^3.1.3"
+  }
+}
