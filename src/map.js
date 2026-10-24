@@ -1,6 +1,7 @@
 import { geoMercator, geoPath } from "d3-geo";
 import { select } from "d3-selection";
 import { zoom, zoomIdentity } from "d3-zoom";
+import { fitTransform, frameSpec } from "./frame.js";
 import { regionOutline } from "./outline.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -349,37 +350,18 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
     return { geo, k: transform.k };
   }
 
-  function landmarkFeature(id) {
-    return atlas.provincesGeo.features.find(
-      (feature) => feature.properties?.kind === "landmark" && feature.properties?.id === id
-    ) || null;
-  }
-
   function frameFeature() {
-    const place = question?.place;
-    if (!place || question.mode !== "type") return null;
-    if (place.kind === "province") return place.regionRecord?.feature || null;
-    if (place.kind === "city") {
-      if (place.provinceRecord?.feature) return place.provinceRecord.feature;
-      return landmarkFeature(place.region) || place.regionRecord?.feature || null;
-    }
-    return null;
+    if (!question?.place || question.mode !== "type") return null;
+    return frameSpec(question.place, atlas.provincesGeo.features);
   }
 
   function transformFor(feature) {
     const width = svg.clientWidth;
     const height = svg.clientHeight;
-    if (width < 10 || height < 10) return null;
-    const bounds = path.bounds(feature);
-    const dx = bounds[1][0] - bounds[0][0];
-    const dy = bounds[1][1] - bounds[0][1];
-    if (!(dx > 0) || !(dy > 0)) return null;
-    const cx = (bounds[0][0] + bounds[1][0]) / 2;
-    const cy = (bounds[0][1] + bounds[1][1]) / 2;
-    let scale = Math.min((width * 0.62) / dx, (height * 0.62) / dy);
-    scale = Math.max(1, Math.min(8, scale));
-    if (scale <= 1.05) return zoomIdentity;
-    return zoomIdentity.translate(width / 2 - scale * cx, height / 2 - scale * cy).scale(scale);
+    if (!feature || width < 10 || height < 10) return zoomIdentity;
+    const coverage = question?.place?.kind === "region" ? 0.7 : 0.62;
+    const next = fitTransform(path.bounds(feature), width, height, { coverage });
+    return zoomIdentity.translate(next.x, next.y).scale(next.k);
   }
 
   function applyTransform(next) {
@@ -421,9 +403,7 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
     if (framedKey === question.key) return;
     framedKey = question.key;
     if (!locateEnabled || holdCountry || playerAdjusted) return;
-    const feature = frameFeature();
-    if (!feature) return;
-    easeTo(transformFor(feature));
+    easeTo(transformFor(frameFeature()));
   }
 
   function fit() {
@@ -457,9 +437,7 @@ export function mountMap(svg, atlas, onPick, onHover = () => {}) {
         applyTransform(zoomIdentity.translate(width / 2 - k * px[0], height / 2 - k * px[1]).scale(k));
       }
     } else if (restoreFrame) {
-      const feature = frameFeature();
-      const next = feature ? transformFor(feature) : null;
-      if (next) applyTransform(next);
+      applyTransform(transformFor(frameFeature()));
     }
   }
 
